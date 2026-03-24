@@ -383,20 +383,31 @@ function pv(u,n){
   document.getElementById('pdl').href='files/'+u;
   document.getElementById('pdl').download=u;
   const ext=u.split('.').pop().toLowerCase();
+  const pbody=document.getElementById('pbody');
   let inner='';
-  if(ext==='pdf'){
-    inner=`<iframe src="files/${encodeURIComponent(u)}#toolbar=0" title="${n}"></iframe>`;
+
+  if(ext==='txt'){
+    pbody.innerHTML='<div class="prev-txt">Carregando...</div>';
+    fetch('files/'+u).then(r=>r.text()).then(t=>{
+      pbody.innerHTML=`<div class="prev-txt">${t.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')}</div>`;
+    }).catch(()=>{
+      pbody.innerHTML='<div class="prev-notsup"><span>⚠️</span><p>Erro ao carregar o arquivo.</p></div>';
+    });
   } else if(ext==='html'){
     inner=`<iframe src="files/${encodeURIComponent(u)}" title="${n}" sandbox="allow-scripts allow-same-origin"></iframe>`;
-  } else if(ext==='txt'){
-    fetch('files/'+u).then(r=>r.text()).then(t=>{
-      document.getElementById('pbody').innerHTML=`<div class="prev-txt">${t.replace(/</g,'&lt;').replace(/>/g,'&gt;')}</div>`;
-    });
-    inner='<div class="prev-txt">Carregando...</div>';
+    pbody.innerHTML=inner;
+  } else if(['pdf','xlsx','xls','docx','doc','pptx','ppt'].includes(ext)){
+    // Para funcionar no Vercel precisamos da URL absoluta do arquivo
+    const base=window.location.origin+window.location.pathname.replace(/\/[^/]*$/,'/');
+    const fileUrl=base+'files/'+u;
+    const gdocs='https://docs.google.com/gview?embedded=true&url='+encodeURIComponent(fileUrl);
+    inner=`<iframe src="${gdocs}" title="${n}" allow="autoplay"></iframe>`;
+    pbody.innerHTML=inner;
   } else {
     inner=`<div class="prev-notsup"><span>📄</span><p>Prévia não disponível para este formato.</p><a class="prev-dl" href="files/${u}" download>⬇ Baixar arquivo</a></div>`;
+    pbody.innerHTML=inner;
   }
-  document.getElementById('pbody').innerHTML=inner;
+
   document.getElementById('pov').classList.add('open');
   document.body.style.overflow='hidden';
 }
