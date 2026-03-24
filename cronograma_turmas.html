@@ -1,0 +1,273 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Cronograma — Intermediário & Avançado</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --bg: #F4F3EF; --card-bg: #FAFAF8; --border: #E2E0D8;
+    --text-main: #1A1A18; --text-sub: #6B6A64; --text-muted: #A09E96;
+    --excel-bg: #E8F4EC; --excel-txt: #1A5C30; --excel-dot: #2E8B57;
+    --ppt-bg: #FEF0E6; --ppt-txt: #7A3410; --ppt-dot: #D9561E;
+    --google-bg: #E8F0FE; --google-txt: #1A3C8F; --google-dot: #3B6FD4;
+    --canva-bg: #F3E8FE; --canva-txt: #5B1C9F; --canva-dot: #8B3FDB;
+    --ia-bg: #FFF0F5; --ia-txt: #8C1A3E; --ia-dot: #D4386A;
+    --prova-bg: #FFECEC; --prova-txt: #8C1A1A; --prova-dot: #D43838;
+    --rev-bg: #FFF8E8; --rev-txt: #7A5A10; --rev-dot: #C9920A;
+    --livre-bg: #F0F0EC; --livre-txt: #6B6A64; --livre-dot: #A09E96;
+    --word-bg: #E4F2EA; --word-txt: #1A4A30; --word-dot: #1E7A40;
+  }
+  body { font-family: 'DM Sans', sans-serif; background: var(--bg); color: var(--text-main); padding: 32px 20px 60px; min-height: 100vh; }
+  header { text-align: center; margin-bottom: 36px; }
+  .header-label { font-family: 'DM Mono', monospace; font-size: 11px; letter-spacing: .12em; text-transform: uppercase; color: var(--text-muted); margin-bottom: 8px; }
+  h1 { font-size: 26px; font-weight: 600; color: var(--text-main); margin-bottom: 6px; }
+  .header-sub { font-size: 13px; color: var(--text-sub); }
+  .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; max-width: 920px; margin: 0 auto; }
+  @media (max-width: 640px) { .grid { grid-template-columns: 1fr; } }
+  .coluna-header { border-radius: 10px 10px 0 0; padding: 14px 16px; }
+  .col-int { background: #EAF2FF; border: 1px solid #C8DCF7; border-bottom: none; }
+  .col-adv { background: #EEF0FE; border: 1px solid #CDD1F8; border-bottom: none; }
+  .col-titulo { font-size: 14px; font-weight: 600; margin-bottom: 2px; }
+  .col-int .col-titulo { color: #1A3C8F; }
+  .col-adv .col-titulo { color: #3C3489; }
+  .col-sub { font-size: 11px; color: var(--text-sub); }
+  .coluna-body { border: 1px solid var(--border); border-top: none; border-radius: 0 0 10px 10px; overflow: hidden; background: var(--card-bg); }
+  .aula-card { border-bottom: 1px solid var(--border); padding: 10px 14px; cursor: pointer; transition: background .15s; }
+  .aula-card:last-child { border-bottom: none; }
+  .aula-card:hover { background: #EEEDE7; }
+  .aula-top { display: flex; align-items: center; gap: 8px; margin-bottom: 4px; flex-wrap: wrap; }
+  .aula-num { font-family: 'DM Mono', monospace; font-size: 10px; color: var(--text-muted); min-width: 48px; flex-shrink: 0; }
+  .dot { width: 6px; height: 6px; border-radius: 50%; flex-shrink: 0; }
+  .aula-nome { font-size: 13px; font-weight: 500; color: var(--text-main); flex: 1; }
+  .tag { font-size: 10px; font-weight: 500; border-radius: 4px; padding: 2px 7px; white-space: nowrap; }
+  .tag-excel  { background: var(--excel-bg);  color: var(--excel-txt);  }
+  .tag-word   { background: var(--word-bg);   color: var(--word-txt);   }
+  .tag-ppt    { background: var(--ppt-bg);    color: var(--ppt-txt);    }
+  .tag-google { background: var(--google-bg); color: var(--google-txt); }
+  .tag-canva  { background: var(--canva-bg);  color: var(--canva-txt);  }
+  .tag-ia     { background: var(--ia-bg);     color: var(--ia-txt);     }
+  .tag-prova  { background: var(--prova-bg);  color: var(--prova-txt);  }
+  .tag-rev    { background: var(--rev-bg);    color: var(--rev-txt);    }
+  .tag-livre  { background: var(--livre-bg);  color: var(--livre-txt);  }
+  .dot-excel  { background: var(--excel-dot); } .dot-word   { background: var(--word-dot);   }
+  .dot-ppt    { background: var(--ppt-dot);   } .dot-google { background: var(--google-dot); }
+  .dot-canva  { background: var(--canva-dot); } .dot-ia     { background: var(--ia-dot);     }
+  .dot-prova  { background: var(--prova-dot); } .dot-rev    { background: var(--rev-dot);    }
+  .dot-livre  { background: var(--livre-dot); }
+  .aula-desc { font-size: 11px; color: var(--text-sub); line-height: 1.55; padding-left: 14px; }
+  .click-hint { font-size: 10px; color: var(--text-muted); padding-left: 14px; margin-top: 3px; }
+  .secao-label { font-family: 'DM Mono', monospace; font-size: 10px; letter-spacing: .08em; text-transform: uppercase; color: var(--text-muted); padding: 8px 14px 4px; background: var(--bg); border-bottom: 1px solid var(--border); }
+  .totais { max-width: 920px; margin: 16px auto 0; display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; }
+  .total-pill { font-size: 11px; color: var(--text-sub); background: var(--card-bg); border: 1px solid var(--border); border-radius: 20px; padding: 5px 14px; }
+  .total-pill strong { color: var(--text-main); }
+  .overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,.45); z-index: 100; align-items: center; justify-content: center; padding: 20px; }
+  .overlay.open { display: flex; }
+  .modal { background: var(--card-bg); border-radius: 14px; width: 100%; max-width: 560px; max-height: 88vh; overflow-y: auto; box-shadow: 0 20px 60px rgba(0,0,0,.25); animation: pop .18s ease; }
+  @keyframes pop { from { transform: scale(.95); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+  .modal-header { padding: 18px 20px 14px; border-bottom: 1px solid var(--border); display: flex; align-items: flex-start; gap: 12px; }
+  .modal-header-left { flex: 1; }
+  .modal-num { font-family: 'DM Mono', monospace; font-size: 11px; color: var(--text-muted); margin-bottom: 4px; }
+  .modal-titulo { font-size: 16px; font-weight: 600; color: var(--text-main); }
+  .modal-close { background: none; border: none; cursor: pointer; font-size: 20px; color: var(--text-muted); padding: 0 4px; line-height: 1; }
+  .modal-close:hover { color: var(--text-main); }
+  .modal-body { padding: 16px 20px 20px; }
+  .modal-section { margin-bottom: 16px; }
+  .modal-section:last-child { margin-bottom: 0; }
+  .modal-section-title { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: .07em; color: var(--text-muted); margin-bottom: 8px; }
+  .topico { display: flex; gap: 8px; align-items: flex-start; font-size: 13px; color: var(--text-main); margin-bottom: 6px; line-height: 1.5; }
+  .topico-bullet { color: var(--text-muted); flex-shrink: 0; margin-top: 1px; }
+  .arquivo-btn { display: inline-flex; align-items: center; gap: 6px; background: #F0F7FF; border: 1px solid #C8DCF7; border-radius: 6px; padding: 7px 12px; font-size: 12px; font-weight: 500; color: #1A3C8F; text-decoration: none; margin: 3px 4px 3px 0; transition: background .15s; }
+  .arquivo-btn:hover { background: #DCEEFF; }
+  .arquivo-btn .ico { font-size: 14px; }
+  .obs-box { background: #FFFBF0; border: 1px solid #F0E0A0; border-radius: 8px; padding: 10px 12px; font-size: 12px; color: #7A5A10; line-height: 1.55; }
+</style>
+</head>
+<body>
+<header>
+  <div class="header-label">FIEC · Inclusão Digital 2025</div>
+  <h1>Cronograma de Aulas</h1>
+  <div class="header-sub">Módulo II Intermediário · Módulo III Avançado · clique em qualquer aula para ver o plano</div>
+</header>
+<div class="grid">
+
+<!-- INTERMEDIÁRIO -->
+<div>
+  <div class="coluna-header col-int">
+    <div class="col-titulo">Turma Intermediária — Módulo II</div>
+    <div class="col-sub">Word · PowerPoint · Google Docs · Google Slides · Canva · IA</div>
+  </div>
+  <div class="coluna-body">
+    <div class="secao-label">Ciclo anterior</div>
+    <div class="aula-card" onclick="openModal('i1')"><div class="aula-top"><span class="aula-num">Aula 1</span><span class="dot dot-word"></span><span class="aula-nome">Entender o que sabem</span><span class="tag tag-word">Word</span></div><div class="aula-desc">Diagnóstico do nível da turma sobre informática</div><div class="click-hint">↗ ver plano</div></div>
+    <div class="aula-card" onclick="openModal('i2')"><div class="aula-top"><span class="aula-num">Aula 2</span><span class="dot dot-word"></span><span class="aula-nome">Formatação Simples</span><span class="tag tag-word">Word</span></div><div class="aula-desc">Negrito, itálico, sublinhado, cores, alinhamentos e espaçamentos</div><div class="click-hint">↗ ver plano</div></div>
+    <div class="aula-card" onclick="openModal('i3')"><div class="aula-top"><span class="aula-num">Aula 3</span><span class="dot dot-word"></span><span class="aula-nome">Cabeçalho, Rodapé e Numeração</span><span class="tag tag-word">Word</span></div><div class="aula-desc">Inserir e editar cabeçalhos, rodapés e numeração automática</div><div class="click-hint">↗ ver plano</div></div>
+    <div class="aula-card" onclick="openModal('i4')"><div class="aula-top"><span class="aula-num">Aula 4</span><span class="dot dot-word"></span><span class="aula-nome">Sumário e Índices Automáticos</span><span class="tag tag-word">Word</span></div><div class="aula-desc">Criação de sumário e índices automáticos em documentos longos</div><div class="click-hint">↗ ver plano</div></div>
+    <div class="aula-card" onclick="openModal('i5')"><div class="aula-top"><span class="aula-num">Aula 5</span><span class="dot dot-rev"></span><span class="aula-nome">Atividade Geral</span><span class="tag tag-rev">Revisão</span></div><div class="aula-desc">Prática ampla dos conteúdos do Word</div><div class="click-hint">↗ ver plano</div></div>
+    <div class="aula-card" onclick="openModal('i6')"><div class="aula-top"><span class="aula-num">Aula 6</span><span class="dot dot-word"></span><span class="aula-nome">Aula Final de Word</span><span class="tag tag-word">Word</span></div><div class="aula-desc">Formatação completa de documento — passo a passo com arquivo real</div><div class="click-hint">↗ ver plano</div></div>
+    <div class="aula-card" onclick="openModal('i7')"><div class="aula-top"><span class="aula-num">Aula 7</span><span class="dot dot-google"></span><span class="aula-nome">Google Docs — Primeiros Recursos</span><span class="tag tag-google">Google</span></div><div class="aula-desc">Edição, compartilhamento, comentários e colaboração em tempo real</div><div class="click-hint">↗ ver plano</div></div>
+    <div class="aula-card" onclick="openModal('i8')"><div class="aula-top"><span class="aula-num">Aula 8</span><span class="dot dot-ppt"></span><span class="aula-nome">Introdução ao PowerPoint</span><span class="tag tag-ppt">PowerPoint</span></div><div class="aula-desc">Slides, textos, imagens e noções básicas de design</div><div class="click-hint">↗ ver plano</div></div>
+    <div class="aula-card" onclick="openModal('i9')"><div class="aula-top"><span class="aula-num">Aula 9</span><span class="dot dot-ppt"></span><span class="aula-nome">PowerPoint — Animações e Recursos Visuais</span><span class="tag tag-ppt">PowerPoint</span></div><div class="aula-desc">Animações, transições e elementos visuais dinâmicos</div><div class="click-hint">↗ ver plano</div></div>
+    <div class="aula-card" onclick="openModal('i10')"><div class="aula-top"><span class="aula-num">Aula 10</span><span class="dot dot-ppt"></span><span class="aula-nome">PowerPoint — Recursos Adicionais</span><span class="tag tag-ppt">PowerPoint</span></div><div class="aula-desc">Áudio, vídeo, gráficos, SmartArt e ajustes de layout</div><div class="click-hint">↗ ver plano</div></div>
+    <div class="aula-card" onclick="openModal('i11')"><div class="aula-top"><span class="aula-num">Aula 11</span><span class="dot dot-ppt"></span><span class="aula-nome">Aula Final de PowerPoint</span><span class="tag tag-ppt">PowerPoint</span></div><div class="aula-desc">Atividade Pizzaria — integrando todos os recursos</div><div class="click-hint">↗ ver plano</div></div>
+    <div class="aula-card" onclick="openModal('i12')"><div class="aula-top"><span class="aula-num">Aula 12</span><span class="dot dot-google"></span><span class="aula-nome">Google Slides</span><span class="tag tag-google">Google</span></div><div class="aula-desc">Apresentações online, templates e colaboração simultânea</div><div class="click-hint">↗ ver plano</div></div>
+    <div class="aula-card" onclick="openModal('i13')"><div class="aula-top"><span class="aula-num">Aula 13</span><span class="dot dot-google"></span><span class="aula-nome">Google Agenda e Google Meet</span><span class="tag tag-google">Google</span></div><div class="aula-desc">Organização de compromissos e videochamadas</div><div class="click-hint">↗ ver plano</div></div>
+    <div class="secao-label">Ciclo atual</div>
+    <div class="aula-card" onclick="openModal('i14')"><div class="aula-top"><span class="aula-num">Aula 14</span><span class="dot dot-ppt"></span><span class="aula-nome">PowerPoint — Aula Final</span><span class="tag tag-ppt">PowerPoint</span></div><div class="aula-desc">SmartArt, gráficos, Designer inteligente, alinhamento</div><div class="click-hint">↗ ver plano</div></div>
+    <div class="aula-card" onclick="openModal('i15')"><div class="aula-top"><span class="aula-num">Aula 15</span><span class="dot dot-google"></span><span class="aula-nome">Google Slides</span><span class="tag tag-google">Google</span></div><div class="aula-desc">Comparativo com PowerPoint, colaboração, Q&A com público</div><div class="click-hint">↗ ver plano</div></div>
+    <div class="aula-card" onclick="openModal('i16')"><div class="aula-top"><span class="aula-num">Aula 16</span><span class="dot dot-google"></span><span class="aula-nome">Google Meet + Agenda</span><span class="tag tag-google">Google</span></div><div class="aula-desc">Criar reunião, compartilhar tela, agendar com link Meet</div><div class="click-hint">↗ ver plano</div></div>
+    <div class="aula-card" onclick="openModal('i17')"><div class="aula-top"><span class="aula-num">Aula 17</span><span class="dot dot-canva"></span><span class="aula-nome">Canva — Introdução</span><span class="tag tag-canva">Canva</span></div><div class="aula-desc">Conta, interface, templates, textos e elementos básicos</div><div class="click-hint">↗ ver plano</div></div>
+    <div class="aula-card" onclick="openModal('i18')"><div class="aula-top"><span class="aula-num">Aula 18</span><span class="dot dot-canva"></span><span class="aula-nome">Canva — Intermediário</span><span class="tag tag-canva">Canva</span></div><div class="aula-desc">Frames, ícones, paleta de cores, exportação e animações</div><div class="click-hint">↗ ver plano</div></div>
+    <div class="aula-card" onclick="openModal('i19')"><div class="aula-top"><span class="aula-num">Aula 19</span><span class="dot dot-google"></span><span class="aula-nome">Google Forms</span><span class="tag tag-google">Google</span></div><div class="aula-desc">Criar formulário, tipos de pergunta, lógica condicional</div><div class="click-hint">↗ ver plano</div></div>
+    <div class="aula-card" onclick="openModal('i20')"><div class="aula-top"><span class="aula-num">Aula 20</span><span class="dot dot-ia"></span><span class="aula-nome">Introdução à IA — ChatGPT</span><span class="tag tag-ia">IA</span></div><div class="aula-desc">O que é IA, boas perguntas, usos práticos do ChatGPT</div><div class="click-hint">↗ ver plano</div></div>
+    <div class="aula-card" onclick="openModal('i21')"><div class="aula-top"><span class="aula-num">Aula 21</span><span class="dot dot-rev"></span><span class="aula-nome">Revisão Geral</span><span class="tag tag-rev">Revisão</span></div><div class="aula-desc">Dúvidas de Google + Canva + IA, exercícios práticos</div><div class="click-hint">↗ ver plano</div></div>
+    <div class="aula-card" onclick="openModal('i22')"><div class="aula-top"><span class="aula-num">Aula 22</span><span class="dot dot-google"></span><span class="aula-nome">Google Keep + Agenda</span><span class="tag tag-google">Google</span></div><div class="aula-desc">Organização digital — notas, listas e eventos</div><div class="click-hint">↗ ver plano</div></div>
+    <div class="aula-card" onclick="openModal('i23')"><div class="aula-top"><span class="aula-num">Aula 23</span><span class="dot dot-rev"></span><span class="aula-nome">Revisão Prática</span><span class="tag tag-rev">Revisão</span></div><div class="aula-desc">Exercícios de Word, PowerPoint e Canva</div><div class="click-hint">↗ ver plano</div></div>
+    <div class="aula-card" onclick="openModal('i24')"><div class="aula-top"><span class="aula-num">Aula 24</span><span class="dot dot-canva"></span><span class="aula-nome">Currículo no Canva</span><span class="tag tag-canva">Canva</span></div><div class="aula-desc">Cada aluno monta o próprio currículo com template profissional</div><div class="click-hint">↗ ver plano</div></div>
+    <div class="aula-card" onclick="openModal('enc')"><div class="aula-top"><span class="aula-num">Aula 25</span><span class="dot dot-livre"></span><span class="aula-nome">Encerramento</span><span class="tag tag-livre">Encerramento</span></div><div class="aula-desc">Retrospectiva, dúvidas finais e encerramento</div><div class="click-hint">↗ ver plano</div></div>
+  </div>
+</div>
+
+<!-- AVANÇADO -->
+<div>
+  <div class="coluna-header col-adv">
+    <div class="col-titulo">Turma Avançada — Módulo III</div>
+    <div class="col-sub">Excel avançado · Google Sheets · Google Sites · IA</div>
+  </div>
+  <div class="coluna-body">
+    <div class="secao-label">Ciclo anterior</div>
+    <div class="aula-card" onclick="openModal('a1')"><div class="aula-top"><span class="aula-num">Aula 1</span><span class="dot dot-excel"></span><span class="aula-nome">Introdução / Excel</span><span class="tag tag-excel">Excel</span></div><div class="aula-desc">Diagnóstico + interface do Excel, células, linhas e colunas</div><div class="click-hint">↗ ver plano</div></div>
+    <div class="aula-card" onclick="openModal('a2')"><div class="aula-top"><span class="aula-num">Aula 2</span><span class="dot dot-excel"></span><span class="aula-nome">Fórmulas Simples</span><span class="tag tag-excel">Excel</span></div><div class="aula-desc">Soma, subtração, multiplicação, divisão e preenchimento automático</div><div class="click-hint">↗ ver plano</div></div>
+    <div class="aula-card" onclick="openModal('a3')"><div class="aula-top"><span class="aula-num">Aula 3</span><span class="dot dot-excel"></span><span class="aula-nome">Funções Simples</span><span class="tag tag-excel">Excel</span></div><div class="aula-desc">SOMA, MÉDIA, MÍNIMO, MÁXIMO em situações reais</div><div class="click-hint">↗ ver plano</div></div>
+    <div class="aula-card" onclick="openModal('a4')"><div class="aula-top"><span class="aula-num">Aula 4</span><span class="dot dot-excel"></span><span class="aula-nome">Funções Lógicas</span><span class="tag tag-excel">Excel</span></div><div class="aula-desc">SE, E, OU para análise condicional</div><div class="click-hint">↗ ver plano</div></div>
+    <div class="aula-card" onclick="openModal('a5')"><div class="aula-top"><span class="aula-num">Aula 5</span><span class="dot dot-excel"></span><span class="aula-nome">Lógica Avançada</span><span class="tag tag-excel">Excel</span></div><div class="aula-desc">SE aninhado, combinações de E/OU e condições múltiplas</div><div class="click-hint">↗ ver plano</div></div>
+    <div class="aula-card" onclick="openModal('a6')"><div class="aula-top"><span class="aula-num">Aula 6</span><span class="dot dot-excel"></span><span class="aula-nome">Referências</span><span class="tag tag-excel">Excel</span></div><div class="aula-desc">Absolutas, relativas e mistas — travamento com F4</div><div class="click-hint">↗ ver plano</div></div>
+    <div class="aula-card" onclick="openModal('a7')"><div class="aula-top"><span class="aula-num">Aula 7</span><span class="dot dot-excel"></span><span class="aula-nome">Tabela Dinâmica</span><span class="tag tag-excel">Excel</span></div><div class="aula-desc">Criar tabelas dinâmicas, segmentações e análises rápidas</div><div class="click-hint">↗ ver plano</div></div>
+    <div class="aula-card" onclick="openModal('a8')"><div class="aula-top"><span class="aula-num">Aula 8</span><span class="dot dot-excel"></span><span class="aula-nome">Macros</span><span class="tag tag-excel">Excel</span></div><div class="aula-desc">Gravar, executar e criar botões de automação</div><div class="click-hint">↗ ver plano</div></div>
+    <div class="aula-card" onclick="openModal('a9')"><div class="aula-top"><span class="aula-num">Aula 9</span><span class="dot dot-rev"></span><span class="aula-nome">Atividades Complementares</span><span class="tag tag-rev">Revisão</span></div><div class="aula-desc">Exercícios extras de fórmulas, funções e conceitos avançados</div><div class="click-hint">↗ ver plano</div></div>
+    <div class="aula-card" onclick="openModal('a10')"><div class="aula-top"><span class="aula-num">Aula 10</span><span class="dot dot-prova"></span><span class="aula-nome">Prova — Excel</span><span class="tag tag-prova">Prova</span></div><div class="aula-desc">Avaliação prática completa do módulo Excel</div><div class="click-hint">↗ ver plano</div></div>
+    <div class="aula-card" onclick="openModal('a11')"><div class="aula-top"><span class="aula-num">Aula 11</span><span class="dot dot-excel"></span><span class="aula-nome">PROCV (introdução)</span><span class="tag tag-excel">Excel</span></div><div class="aula-desc">PROCV aplicado em situações reais de consulta</div><div class="click-hint">↗ ver plano</div></div>
+    <div class="aula-card" onclick="openModal('a12')"><div class="aula-top"><span class="aula-num">Aula 12</span><span class="dot dot-google"></span><span class="aula-nome">Google Sheets — Parte 1</span><span class="tag tag-google">Google</span></div><div class="aula-desc">Revisão das fórmulas Excel + funções exclusivas do Sheets</div><div class="click-hint">↗ ver plano</div></div>
+    <div class="aula-card" onclick="openModal('a13')"><div class="aula-top"><span class="aula-num">Aula 13</span><span class="dot dot-rev"></span><span class="aula-nome">Correção — PROCV e Google Sheets</span><span class="tag tag-rev">Revisão</span></div><div class="aula-desc">Correção coletiva dos exercícios de PROCV e Sheets</div><div class="click-hint">↗ ver plano</div></div>
+    <div class="aula-card" onclick="openModal('a14')"><div class="aula-top"><span class="aula-num">Aula 14</span><span class="dot dot-google"></span><span class="aula-nome">Google Sheets Parte 2 + Forms</span><span class="tag tag-google">Google</span></div><div class="aula-desc">Gráficos, formatação condicional, filtros e Google Forms</div><div class="click-hint">↗ ver plano</div></div>
+    <div class="aula-card" onclick="openModal('a15')"><div class="aula-top"><span class="aula-num">Aula 15</span><span class="dot dot-ia"></span><span class="aula-nome">IA — Atividade</span><span class="tag tag-ia">IA</span></div><div class="aula-desc">ChatGPT, Gemini, Midjourney, ManusAI e SunoAI</div><div class="click-hint">↗ ver plano</div></div>
+    <div class="secao-label">Ciclo atual</div>
+    <div class="aula-card" onclick="openModal('a16')"><div class="aula-top"><span class="aula-num">Aula 16</span><span class="dot dot-rev"></span><span class="aula-nome">Revisão Excel para Prova</span><span class="tag tag-rev">Revisão</span></div><div class="aula-desc">SE aninhado, tabela dinâmica, macros — simulado</div><div class="click-hint">↗ ver plano</div></div>
+    <div class="aula-card" onclick="openModal('a17')"><div class="aula-top"><span class="aula-num">Aula 17</span><span class="dot dot-prova"></span><span class="aula-nome">Prova — Excel Módulo III</span><span class="tag tag-prova">Prova</span></div><div class="aula-desc">Avaliação completa — SE aninhado, tabela dinâmica, macros</div><div class="click-hint">↗ ver plano</div></div>
+    <div class="aula-card" onclick="openModal('a18')"><div class="aula-top"><span class="aula-num">Aula 18</span><span class="dot dot-excel"></span><span class="aula-nome">Excel — PROCV</span><span class="tag tag-excel">Excel</span></div><div class="aula-desc">PROCV aprofundado com guia e lista de exercícios</div><div class="click-hint">↗ ver plano</div></div>
+    <div class="aula-card" onclick="openModal('a19')"><div class="aula-top"><span class="aula-num">Aula 19</span><span class="dot dot-excel"></span><span class="aula-nome">Excel — ÍNDICE + CORRESP</span><span class="tag tag-excel">Excel</span></div><div class="aula-desc">A dupla que substitui o PROCV — busca em qualquer direção</div><div class="click-hint">↗ ver plano</div></div>
+    <div class="aula-card" onclick="openModal('a20')"><div class="aula-top"><span class="aula-num">Aula 20</span><span class="dot dot-google"></span><span class="aula-nome">Google Planilhas</span><span class="tag tag-google">Google</span></div><div class="aula-desc">Salvamento automático, cores alternadas, filtros, funções exclusivas</div><div class="click-hint">↗ ver plano</div></div>
+    <div class="aula-card" onclick="openModal('a21')"><div class="aula-top"><span class="aula-num">Aula 21</span><span class="dot dot-google"></span><span class="aula-nome">Google Sites + Forms</span><span class="tag tag-google">Google</span></div><div class="aula-desc">Criar site arrastrando elementos, Forms conectado ao Sheets</div><div class="click-hint">↗ ver plano</div></div>
+    <div class="aula-card" onclick="openModal('a22')"><div class="aula-top"><span class="aula-num">Aula 22</span><span class="dot dot-ia"></span><span class="aula-nome">IA Dia 1 — Criar</span><span class="tag tag-ia">IA</span></div><div class="aula-desc">ChatGPT, Gemini + Drive, Gamma e SunoAI</div><div class="click-hint">↗ ver plano</div></div>
+    <div class="aula-card" onclick="openModal('a23')"><div class="aula-top"><span class="aula-num">Aula 23</span><span class="dot dot-ia"></span><span class="aula-nome">IA Dia 2 — Pesquisar</span><span class="tag tag-ia">IA</span></div><div class="aula-desc">NotebookLM, Perplexity, Napkin, Fireflies</div><div class="click-hint">↗ ver plano</div></div>
+    <div class="aula-card" onclick="openModal('a24')"><div class="aula-top"><span class="aula-num">Aula 24</span><span class="dot dot-excel"></span><span class="aula-nome">Excel no Dia a Dia</span><span class="tag tag-excel">Excel</span></div><div class="aula-desc">Planilha de gastos pessoais — aplicação prática</div><div class="click-hint">↗ ver plano</div></div>
+    <div class="aula-card" onclick="openModal('a25')"><div class="aula-top"><span class="aula-num">Aula 25</span><span class="dot dot-rev"></span><span class="aula-nome">Revisão Excel</span><span class="tag tag-rev">Revisão</span></div><div class="aula-desc">Dúvidas de PROCV, ÍNDICE+CORRESP, SE e Tabela Dinâmica</div><div class="click-hint">↗ ver plano</div></div>
+    <div class="aula-card" onclick="openModal('a26')"><div class="aula-top"><span class="aula-num">Aula 26</span><span class="dot dot-rev"></span><span class="aula-nome">Revisão Geral</span><span class="tag tag-rev">Revisão</span></div><div class="aula-desc">Exercícios mistos — cada aluno no próprio ritmo</div><div class="click-hint">↗ ver plano</div></div>
+    <div class="aula-card" onclick="openModal('enc')"><div class="aula-top"><span class="aula-num">Aula 27</span><span class="dot dot-livre"></span><span class="aula-nome">Encerramento</span><span class="tag tag-livre">Encerramento</span></div><div class="aula-desc">Retrospectiva, dúvidas finais e encerramento</div><div class="click-hint">↗ ver plano</div></div>
+  </div>
+</div>
+</div>
+
+<div class="totais">
+  <div class="total-pill">Intermediário: <strong>13</strong> ciclo anterior + <strong>12</strong> ciclo atual = <strong>25 aulas</strong></div>
+  <div class="total-pill">Avançado: <strong>15</strong> ciclo anterior + <strong>12</strong> ciclo atual = <strong>27 aulas</strong></div>
+</div>
+
+<div class="overlay" id="overlay" onclick="handleOverlayClick(event)">
+  <div class="modal" id="modal">
+    <div class="modal-header">
+      <div class="modal-header-left">
+        <div class="modal-num" id="modal-num"></div>
+        <div class="modal-titulo" id="modal-titulo"></div>
+      </div>
+      <button class="modal-close" onclick="closeModal()">✕</button>
+    </div>
+    <div class="modal-body" id="modal-body"></div>
+  </div>
+</div>
+
+<script>
+const aulas = {
+  'i1':  {num:'Aula 1 — Intermediário',titulo:'Entender o que sabem',topicos:['Conversa inicial para entender o nível de cada aluno','Exercícios simples de digitação e uso do mouse','Identificar quem já usou Word, PowerPoint e Google Docs'],arquivos:[{nome:'Atividades Intermediário (Drive)',url:'https://drive.google.com/drive/folders/1ewJdSBHr2wi5k19sqhSukQGQpMqZi3Td?usp=drive_link',externo:true}]},
+  'i2':  {num:'Aula 2 — Intermediário',titulo:'Formatação Simples',topicos:['Negrito (Ctrl+N), Itálico (Ctrl+I), Sublinhado (Ctrl+S)','Mudar fonte, tamanho e cor do texto','Alinhamentos: esquerda, centro, direita e justificado','Espaçamento entre linhas e parágrafos'],arquivos:[{nome:'Atividade Formatação Simples',url:'atividade__formatação_simples_.pdf'}]},
+  'i3':  {num:'Aula 3 — Intermediário',titulo:'Cabeçalho, Rodapé e Numeração',topicos:['Inserir > Cabeçalho: nome do documento','Inserir > Rodapé: endereços ou referências','Inserir > Número de Página','Dois cliques no topo para editar cabeçalho já existente'],arquivos:[{nome:'Atividade Cabeçalho/Rodapé',url:'atividades___cabeçalho__rodapé__numeração_páginas_e_imagens_.pdf'}]},
+  'i4':  {num:'Aula 4 — Intermediário',titulo:'Sumário e Índices Automáticos',topicos:['Aplicar estilos Título 1 e Título 2','Referências > Sumário > Sumário Automático 1','Atualizar sumário após edições','Numeração em vários níveis'],arquivos:[{nome:'Atividade Sumário',url:'Atividade__sumario__índices__etc_.pdf'}]},
+  'i5':  {num:'Aula 5 — Intermediário',titulo:'Atividade Geral',topicos:['Prática integrando formatação, cabeçalho, rodapé e sumário','Documento completo sobre tema livre','Revisão das dúvidas das aulas anteriores'],arquivos:[{nome:'Atividade Geral',url:'atividade__geral_.pdf'}]},
+  'i6':  {num:'Aula 6 — Intermediário',titulo:'Aula Final de Word',topicos:['Baixar textosemformato.docx e formatar seguindo Passo a passo.pdf','Resultado esperado disponível no Exemplo-resultadoFinal.pdf','Exportar em PDF e entregar'],arquivos:[{nome:'Instrução Aula Final',url:'Aula_final_Word.pdf'},{nome:'Passo a Passo',url:'Passo_a_passo.pdf'},{nome:'Exemplo Resultado Final',url:'Exemplo-resultadoFinal.pdf'}]},
+  'i7':  {num:'Aula 7 — Intermediário',titulo:'Google Docs — Primeiros Recursos',topicos:['Criar documento em docs.google.com','Comparativo rápido com Word','Compartilhar > Editor, Comentarista ou Leitor','Modo Sugestão: corrigir sem alterar o original','Histórico de versões: Arquivo > Histórico de versões'],arquivos:[{nome:'Atividade Google Docs',url:'atividade__google_Docs_.pdf'}]},
+  'i8':  {num:'Aula 8 — Intermediário',titulo:'Introdução ao PowerPoint',topicos:['Criar apresentação em branco ou com template','Layouts: Título, Cabeçalho e Conteúdo, Duas Partes','Inserir texto, imagens e formas','Atalho Ctrl+M para novo slide'],arquivos:[{nome:'Atividade Início PowerPoint',url:'atividade__começo_powerpoint_.pdf'}]},
+  'i9':  {num:'Aula 9 — Intermediário',titulo:'PowerPoint — Animações e Recursos Visuais',topicos:['Transições: aba Transições > efeito > Aplicar a Todos','Animações de Entrada (verde), Ênfase (amarelo), Saída (vermelho)','Painel de Animação para ordem dos efeitos','Temporizador automático de slides'],arquivos:[{nome:'Atividade Animações',url:'atividades__powerpoint__animações_transições_.pdf'}]},
+  'i10': {num:'Aula 10 — Intermediário',titulo:'PowerPoint — Recursos Adicionais',topicos:['SmartArt: Inserir > SmartArt — lista vira diagrama','Gráficos: Inserir > Gráfico com janela do Excel','Inserir áudio e vídeo','Designer Inteligente: layouts automáticos'],arquivos:[{nome:'Atividade Recursos Adicionais',url:'atividade__adicionais_powerpoint_.pdf'}]},
+  'i11': {num:'Aula 11 — Intermediário',titulo:'Aula Final de PowerPoint',topicos:['Atividade Pizzaria: 3 slides seguindo o passo a passo','Slide 1: capa com fundo vermelho e formas geométricas','Slide 2: cardápio com imagens','Slide 3: menu com sabores e duplicação de elementos'],arquivos:[{nome:'Como Fazer (Pizzaria)',url:'Cópia_de_COMO_FAZER.docx'},{nome:'Exemplo Pizzaria',url:'Cópia_de_Pizzaria.pptx'}]},
+  'i12': {num:'Aula 12 — Intermediário',titulo:'Google Slides',topicos:['Criar apresentação em slides.google.com','Comparativo com PowerPoint','Colaboração: cursor colorido de cada colega','Q&A com público: link para perguntas ao vivo'],arquivos:[{nome:'Atividade Google Slides',url:'Atividade_Google_Slides_.pdf'}]},
+  'i13': {num:'Aula 13 — Intermediário',titulo:'Google Agenda e Google Meet',topicos:['Meet: nova reunião, compartilhar tela, chat interno','Agenda: criar evento com data, horário e convidados','Adicionar link do Meet ao evento','Mini-reunião ao vivo com a turma se possível'],arquivos:[{nome:'Atividade Meet + Agenda',url:'ATIVIDADE___INTEGRAÇÃO_GOOGLE_AGENDA___GOOGLE_MEET.docx'}]},
+  'i14': {num:'Aula 14 — Intermediário',titulo:'PowerPoint — Aula Final',topicos:['SmartArt: Inserir > SmartArt — diagrama visual automático','Gráficos: Inserir > Gráfico — janela do Excel abre','Designer Inteligente: Página Inicial > Designer','Alinhamento: Formatar > Alinhar','Atividade: melhorar slide usando SmartArt ou Designer'],obs:'Última aula de PowerPoint do ciclo atual.'},
+  'i15': {num:'Aula 15 — Intermediário',titulo:'Google Slides',topicos:['Apresentação sobre notícia da semana — 5 slides','Colaboração com colega em tempo real','Modo Sugestão e histórico de versões','Q&A ao vivo com o público'],arquivos:[{nome:'Atividade Google Slides',url:'INT_Aula15_GoogleSlides_Atividades.html'}]},
+  'i16': {num:'Aula 16 — Intermediário',titulo:'Google Meet + Agenda',topicos:['Criar reunião e explorar controles do Meet','Compartilhar tela e usar chat interno','Criar evento na Agenda com link do Meet','Evento recorrente toda semana'],arquivos:[{nome:'Atividade Meet + Agenda',url:'INT_Aula16_MeetAgenda_Atividades.html'}]},
+  'i17': {num:'Aula 17 — Intermediário',titulo:'Canva — Introdução',topicos:['Criar conta em canva.com com o Google','Interface: barra de busca, Criar um Design, Seus Projetos','Personalizar template e baixar como PNG','Atenção: elementos com coroa PRO são pagos'],arquivos:[{nome:'Atividade Canva Intro',url:'INT_Aula17_CanvaIntro_Atividades.html'}]},
+  'i18': {num:'Aula 18 — Intermediário',titulo:'Canva — Intermediário',topicos:['Frames: arrastar foto para dentro do quadro','Ícones no lugar de texto longo','Regra das 3 Cores: 60% fundo / 30% texto / 10% destaque','Animações e exportação PNG/PDF/MP4'],arquivos:[{nome:'Atividade Canva Inter',url:'INT_Aula18_CanvaInter_Atividades.html'}]},
+  'i19': {num:'Aula 19 — Intermediário',titulo:'Google Forms',topicos:['Criar formulário e explorar tipos de pergunta','Lógica condicional por seções','Conectar respostas ao Google Sheets','Compartilhar link do formulário'],arquivos:[{nome:'Atividade Google Forms',url:'INT_Aula19_GoogleForms_Atividades.html'}]},
+  'i20': {num:'Aula 20 — Intermediário',titulo:'Introdução à IA — ChatGPT',topicos:['Acessar chat.openai.com ou Copilot no Edge','Fazer boas perguntas: ser específico e dar contexto','Escrever e-mail, corrigir texto, pedir receita','Mostrar a "alucinação" — IA pode errar'],arquivos:[{nome:'Atividade IA',url:'INT_Aula20_IA_Atividades.html'}],obs:'Aula de experimentação — cada aluno testa no celular ou computador.'},
+  'i21': {num:'Aula 21 — Intermediário',titulo:'Revisão Geral',topicos:['Exercício Word: formatação com imagem e alinhamentos','Exercício PowerPoint: melhorar apresentação com recursos visuais','Exercício Canva: post ou cartaz em 15 minutos','Responder dúvidas que surgirem'],arquivos:[{nome:'Atividade Revisão Geral',url:'INT_Aula21_RevisaoGeral_Atividades.html'}]},
+  'i22': {num:'Aula 22 — Intermediário',titulo:'Google Keep + Agenda',topicos:['Keep: criar nota, lista de tarefas, lembrete por horário','Fixar nota, mudar cor, adicionar etiqueta','Agenda: eventos, visualização semanal, evento recorrente','Plano de estudos integrado Keep + Agenda'],arquivos:[{nome:'Atividade Keep + Agenda',url:'INT_Aula22_KeepAgenda_Atividades.html'}]},
+  'i23': {num:'Aula 23 — Intermediário',titulo:'Revisão Prática',topicos:['Word: documento com capa, sumário e 2 seções','PowerPoint: 5 slides com animações','Canva: post com frame e paleta de cores','Alunos escolhem o que praticar'],arquivos:[{nome:'Atividade Revisão Prática',url:'INT_Aula23_RevisaoPratica_Atividades.html'}]},
+  'i24': {num:'Aula 24 — Intermediário',titulo:'Currículo no Canva',topicos:['Pesquisar "Currículo" e escolher template sóbrio','Personalizar: nome, foto, e-mail, telefone','Preencher Experiência, Formação e Habilidades','Baixar em PDF para Impressão'],arquivos:[{nome:'Atividade Currículo',url:'INT_Aula24_Curriculo_Atividades.html'}],obs:'Cada aluno sai com um currículo em PDF pronto para usar.'},
+
+  'a1':  {num:'Aula 1 — Avançado',titulo:'Introdução / Excel',topicos:['Diagnóstico do nível da turma','Interface do Excel: células, linhas, colunas','Exercícios iniciais de avaliação'],arquivos:[{nome:'Atividades Avançado (Drive)',url:'https://drive.google.com/drive/folders/1vf9iNttdxdevpELlrWU1k1jrULeN8Rcz?usp=sharing',externo:true}]},
+  'a2':  {num:'Aula 2 — Avançado',titulo:'Fórmulas Simples',topicos:['Soma, subtração, multiplicação e divisão usando células','Preenchimento automático de fórmulas','Copiar fórmula para outras linhas'],arquivos:[{nome:'Atividades Fórmulas (arquivo 1)',url:'atvds_aula3.pdf'},{nome:'Atividades Fórmulas (arquivo 2)',url:'atvds2_aula3.pdf'}]},
+  'a3':  {num:'Aula 3 — Avançado',titulo:'Funções Simples',topicos:['SOMA, MÉDIA, MÍNIMO, MÁXIMO em situações reais','MULT para multiplicação de intervalo','Exercícios com dados do cotidiano'],arquivos:[{nome:'Atividades Funções',url:'atividades_excel_aula1.pdf'}]},
+  'a4':  {num:'Aula 4 — Avançado',titulo:'Funções Lógicas',topicos:['SE: sintaxe e uso básico','E: todas as condições precisam ser verdadeiras','OU: basta uma condição ser verdadeira'],arquivos:[{nome:'Atividades Funções Lógicas',url:'atividades_funcoes_logicas_excel__1_.pdf'},{nome:'Planilha Sinais Lógicos',url:'func_log_sinais.xlsx'}]},
+  'a5':  {num:'Aula 5 — Avançado',titulo:'Lógica Avançada',topicos:['SE aninhado: SE dentro de SE','Combinações de SE+E e SE+OU','Condições múltiplas em situações reais'],arquivos:[{nome:'Atividades Lógica (arquivo 1)',url:'atvds_aula4.pdf'},{nome:'Atividades Lógica (arquivo 2)',url:'atvds_2__aula4.pdf'},{nome:'Enunciado TXT',url:'atvd_log_ms.txt'}]},
+  'a6':  {num:'Aula 6 — Avançado',titulo:'Referências',topicos:['Referência relativa: se move ao copiar','Referência absoluta $A$1: travada','Referência mista $A1 ou A$1','F4 para travar rapidamente'],arquivos:[{nome:'Atividades Referências',url:'atvds_fx_ref.txt'}]},
+  'a7':  {num:'Aula 7 — Avançado',titulo:'Tabela Dinâmica',topicos:['Criar tabela dinâmica a partir de dados brutos','Áreas: Linhas, Colunas, Valores, Filtros','Segmentação de dados','Análise de vendas, notas e despesas'],arquivos:[{nome:'Planilha Exercício',url:'ex-atvd_tab_din.xlsx'},{nome:'Enunciado Exercícios',url:'enunc__atvd_tab_din.txt'}]},
+  'a8':  {num:'Aula 8 — Avançado',titulo:'Macros',topicos:['Gravar macro: Exibir > Macros > Gravar Macro','Dar nome e executar','Criar botão: Inserir > Formas > Atribuir Macro','Ideias de macros: formatar cabeçalho, limpar células'],arquivos:[{nome:'Atividade Macros',url:'ADV_Aula08_Macros_Atividades.xlsx'}]},
+  'a9':  {num:'Aula 9 — Avançado',titulo:'Atividades Complementares',topicos:['Exercícios mistos de fórmulas e funções','Preparação para a prova','Revisão de dúvidas individuais'],arquivos:[{nome:'Atividade Complementar',url:'ADV_Aula09_Complementar_Atividades.xlsx'}]},
+  'a10': {num:'Aula 10 — Avançado',titulo:'Prova — Excel',topicos:['Distribuir arquivo de prova sem gabarito','Duração: 60 a 80 minutos','Conteúdo: fórmulas, SE aninhado, funções, tabela dinâmica'],arquivos:[{nome:'Prova — Aluno',url:'Prova_Excel_Modulo3.xlsx'},{nome:'Gabarito — Professor',url:'Gabarito_Excel_Modulo3.xlsx'}]},
+  'a11': {num:'Aula 11 — Avançado',titulo:'PROCV (introdução)',topicos:['O que é PROCV e quando usar','Sintaxe: =PROCV(valor; tabela; coluna; 0)','Aplicação em situações reais'],arquivos:[{nome:'Guia PROCV Professor',url:'Guia_PROCV_Professor.xlsx'},{nome:'Lista PROCV Aluno',url:'Lista_PROCV_Aluno.xlsx'}]},
+  'a12': {num:'Aula 12 — Avançado',titulo:'Google Sheets — Parte 1',topicos:['Revisão das fórmulas Excel no Sheets','Salvamento automático em tempo real','Cores alternadas: Formatar > Cores alternadas','GOOGLEFINANCE e IMPORTRANGE'],arquivos:[{nome:'Atividade Google Sheets',url:'ADV_Aula20_GSheets_Atividades.xlsx'}]},
+  'a13': {num:'Aula 13 — Avançado',titulo:'Correção — PROCV e Google Sheets',topicos:['Corrigir exercícios de PROCV com a turma','Corrigir exercícios de Google Sheets','Tirar dúvidas e consolidar'],obs:'Aula de correção coletiva — mostrar respostas e discutir erros comuns.'},
+  'a14': {num:'Aula 14 — Avançado',titulo:'Google Sheets Parte 2 + Forms',topicos:['Gráficos de barras, pizza e linhas','Formatação condicional por regras de cor','Filtros: Dados > Criar um filtro','Google Forms conectado ao Sheets'],arquivos:[{nome:'Atividade Sheets + Forms',url:'ADV_Aula21_SitesFormsSheets_Atividades.xlsx'}]},
+  'a15': {num:'Aula 15 — Avançado',titulo:'IA — Atividade',topicos:['ChatGPT para fórmulas e textos','Gemini para documentos do Drive','Midjourney e ManusAI para criação visual','SunoAI para gerar músicas com IA'],arquivos:[{nome:'Atividade IA',url:'ATIVIDADES_IA.pdf'}]},
+  'a16': {num:'Aula 16 — Avançado',titulo:'Revisão Excel para Prova',topicos:['SE aninhado: revisitar com exemplos','Tabela Dinâmica: montar do zero ao vivo','Macros: gravar ao vivo ao formatar cabeçalho','Simulado com 2-3 questões estilo prova'],obs:'Não apresentar conteúdo novo — foco total em consolidar.'},
+  'a17': {num:'Aula 17 — Avançado',titulo:'Prova — Excel Módulo III',topicos:['Distribuir arquivo de prova (sem gabarito)','Duração: 60 a 80 minutos','Conteúdo: SE aninhado, Tabela Dinâmica, Macros'],arquivos:[{nome:'Prova — Aluno',url:'Prova_Excel_Modulo3.xlsx'},{nome:'Gabarito — Professor',url:'Gabarito_Excel_Modulo3.xlsx'}]},
+  'a18': {num:'Aula 18 — Avançado',titulo:'Excel — PROCV',topicos:['Aba 1 do guia: analogia da lista telefônica','4 argumentos: valor, tabela (F4!), coluna, 0','Aba 2: montar fórmula ao vivo passo a passo','Aba 3: erros comuns antes dos exercícios'],arquivos:[{nome:'Guia do Professor',url:'Guia_PROCV_Professor.xlsx'},{nome:'Lista — Aluno',url:'Lista_PROCV_Aluno.xlsx'},{nome:'Gabarito — Professor',url:'Lista_PROCV_Gabarito.xlsx'}]},
+  'a19': {num:'Aula 19 — Avançado',titulo:'Excel — ÍNDICE + CORRESP',topicos:['Limitação do PROCV: só busca para a direita','CORRESP: encontra a posição do valor','ÍNDICE: busca o valor numa posição específica','Fórmula combinada ao vivo'],arquivos:[{nome:'Guia do Professor',url:'Guia_INDICE_CORRESP.xlsx'}],obs:'Lista de exercícios de ÍNDICE+CORRESP ainda não criada.'},
+  'a20': {num:'Aula 20 — Avançado',titulo:'Google Planilhas',topicos:['Salvamento automático — sem Ctrl+S','Cores alternadas: Formatar > Cores alternadas','Filtros sem atrapalhar colegas','GOOGLEFINANCE para cotação ao vivo'],arquivos:[{nome:'Atividade Google Sheets',url:'ADV_Aula20_GSheets_Atividades.xlsx'}]},
+  'a21': {num:'Aula 21 — Avançado',titulo:'Google Sites + Forms',topicos:['Sites: criar site arrastando elementos','Embutir gráfico do Sheets no site','Forms com tipos variados de pergunta','Conectar Forms ao Sheets e embutir no Site'],arquivos:[{nome:'Atividade Sites + Forms',url:'ADV_Aula21_SitesFormsSheets_Atividades.xlsx'}]},
+  'a22': {num:'Aula 22 — Avançado',titulo:'IA Dia 1 — Criar',topicos:['ChatGPT/Copilot: pedir fórmula de Excel e revisar e-mail','Gemini + Drive: resumir documento','Gamma App: gerar apresentação inteira a partir de tema','SunoAI: gerar música com letra a partir de descrição'],obs:'Foco em ferramentas que CRIAM conteúdo novo.'},
+  'a23': {num:'Aula 23 — Avançado',titulo:'IA Dia 2 — Pesquisar',topicos:['NotebookLM: carregar apostila e fazer perguntas','Gerar podcast automático do documento','Perplexity: pesquisa com fontes citadas','Napkin.ai: texto vira infográfico automaticamente'],obs:'Foco em ferramentas que PROCESSAM o que já existe.'},
+  'a24': {num:'Aula 24 — Avançado',titulo:'Excel no Dia a Dia',topicos:['Planilha de controle de gastos pessoais do zero','Colunas: Data, Descrição, Categoria, Valor, Tipo','SOMA entradas, SOMA saídas, SALDO = entradas − saídas','Formatação condicional: saídas em vermelho','Gráfico de pizza por categoria'],obs:'Aula mais leve — aplicação prática sem conteúdo novo.'},
+  'a25': {num:'Aula 25 — Avançado',titulo:'Revisão Excel',topicos:['Dúvidas de PROCV, ÍNDICE+CORRESP, SE aninhado e Tabela Dinâmica','Exercício misto com pelo menos 2 funções juntas','Resolver dúvidas individualmente'],obs:'Deixar fluir conforme as dúvidas — sem ordem rígida.'},
+  'a26': {num:'Aula 26 — Avançado',titulo:'Revisão Geral',topicos:['Exercícios mistos de tudo do módulo','Sugestão: planilha com PROCV + SE + Tabela Dinâmica','Dúvidas de Google e IA também']},
+  'enc': {num:'Aula Final',titulo:'Encerramento',topicos:['Retrospectiva: o que mais gostaram de aprender','Espaço aberto para dúvidas finais','Cada aluno mostra algo criado durante o curso','Orientações para continuar praticando'],obs:'Aula leve — encerrar bem com sensação de conquista.'},
+};
+
+function openModal(id) {
+  const a = aulas[id]; if (!a) return;
+  document.getElementById('modal-num').textContent = a.num;
+  document.getElementById('modal-titulo').textContent = a.titulo;
+  let html = '<div class="modal-section"><div class="modal-section-title">O que passar</div>';
+  a.topicos.forEach(t => { html += `<div class="topico"><span class="topico-bullet">→</span><span>${t}</span></div>`; });
+  html += '</div>';
+  if (a.arquivos && a.arquivos.length) {
+    html += '<div class="modal-section"><div class="modal-section-title">Arquivos</div>';
+    a.arquivos.forEach(f => {
+      const target = f.externo ? ' target="_blank" rel="noopener"' : '';
+      const dl = f.externo ? '' : ' download';
+      html += `<a class="arquivo-btn" href="${f.url}"${target}${dl}><span class="ico">📄</span>${f.nome}</a>`;
+    });
+    html += '</div>';
+  }
+  if (a.obs) html += `<div class="modal-section"><div class="obs-box">💡 ${a.obs}</div></div>`;
+  document.getElementById('modal-body').innerHTML = html;
+  document.getElementById('overlay').classList.add('open');
+  document.body.style.overflow = 'hidden';
+}
+function closeModal() { document.getElementById('overlay').classList.remove('open'); document.body.style.overflow = ''; }
+function handleOverlayClick(e) { if (e.target === document.getElementById('overlay')) closeModal(); }
+document.addEventListener('keydown', e => { if (e.key === 'Escape') closeModal(); });
+</script>
+</body>
+</html>
