@@ -87,27 +87,16 @@
   .enc-box{background:#FFF0F5;border:1px solid #F5C0D0;border-radius:8px;padding:10px 12px;font-size:13px;color:#8C1A3E;text-align:center;font-weight:500}
 
   /* ===== PREVIEW MODAL ===== */
-  .prev-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:200;align-items:center;justify-content:center;padding:16px}
-  .prev-overlay.open{display:flex}
-  .prev-modal{background:var(--card);border-radius:14px;width:100%;max-width:880px;height:90vh;display:flex;flex-direction:column;box-shadow:0 24px 80px rgba(0,0,0,.35);animation:pop .18s ease}
-  .prev-header{padding:14px 18px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:10px;flex-shrink:0}
-  .prev-title{font-size:13px;font-weight:600;color:var(--main);flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-  .prev-dl{display:inline-flex;align-items:center;gap:6px;background:#1A3C8F;color:#fff;border:none;border-radius:6px;padding:7px 14px;font-size:12px;font-weight:500;cursor:pointer;text-decoration:none}
+
   .prev-dl:hover{background:#163080}
-  .prev-close{background:none;border:none;cursor:pointer;font-size:20px;color:var(--muted);padding:0 4px}
   .prev-close:hover{color:var(--main)}
-  .prev-body{flex:1;overflow:hidden;border-radius:0 0 14px 14px}
   .prev-body iframe{width:100%;height:100%;border:none;border-radius:0 0 14px 14px}
   .prev-body .prev-txt{padding:20px 24px;overflow-y:auto;height:100%;font-family:'DM Mono',monospace;font-size:12px;line-height:1.7;color:var(--main);white-space:pre-wrap;word-break:break-word}
   .prev-body .prev-notsup{display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;gap:12px;color:var(--sub)}
   .prev-body .prev-notsup span{font-size:36px}
   .prev-body .prev-notsup p{font-size:13px}
   /* Botão de preview nos arquivos */
-  .arq-wrap{display:inline-flex;align-items:center;gap:0;margin:3px 4px 3px 0;border-radius:6px;overflow:hidden;border:1px solid #C8DCF7}
-  .arq-view{display:inline-flex;align-items:center;gap:6px;background:#F0F7FF;padding:7px 10px;font-size:12px;font-weight:500;color:#1A3C8F;text-decoration:none;cursor:pointer;border:none;transition:background .15s}
-  .arq-view:hover{background:#DCEEFF}
-  .arq-sep{width:1px;background:#C8DCF7;align-self:stretch;flex-shrink:0}
-  .arq-dl{display:inline-flex;align-items:center;padding:7px 9px;background:#F0F7FF;font-size:11px;color:#1A3C8F;text-decoration:none;cursor:pointer;border:none;transition:background .15s;white-space:nowrap}
+
   .arq-dl:hover{background:#DCEEFF}
 </style>
 </head>
@@ -192,18 +181,6 @@
   <div class="pill">🍕 04/05 — Encerramento</div>
 </div>
 
-
-<!-- PREVIEW OVERLAY -->
-<div class="prev-overlay" id="pov" onclick="pc(event)">
-  <div class="prev-modal" id="pmodal">
-    <div class="prev-header">
-      <div class="prev-title" id="ptitle">Arquivo</div>
-      <a class="prev-dl" id="pdl" href="#" download>⬇ Baixar</a>
-      <button class="prev-close" onclick="pcl()">✕</button>
-    </div>
-    <div class="prev-body" id="pbody"></div>
-  </div>
-</div>
 
 <div class="overlay" id="ov" onclick="hov(event)">
   <div class="modal" id="modal">
@@ -356,17 +333,9 @@ function o(id){
   if(a.arq&&a.arq.length){
     h+='<div class="ms"><div class="mst">Arquivos</div>';
     a.arq.forEach(f=>{
-      if(f.ext){
-        h+=`<a class="arq" href="${f.u}" target="_blank" rel="noopener">📄 ${f.n}</a>`;
-      } else {
-        const ext=f.u.split('.').pop().toLowerCase();
-        const canPrev=['pdf','txt','html'].includes(ext);
-        if(canPrev){
-          h+=`<span class="arq-wrap"><button class="arq-view" onclick="pv('${f.u}','${f.n.replace(/'/g,"\\'")}')">📄 ${f.n}</button><span class="arq-sep"></span><a class="arq-dl" href="files/${f.u}" download title="Baixar">⬇</a></span>`;
-        } else {
-          h+=`<span class="arq-wrap"><span class="arq-view" style="cursor:default">📄 ${f.n}</span><span class="arq-sep"></span><a class="arq-dl" href="files/${f.u}" download title="Baixar">⬇</a></span>`;
-        }
-      }
+      const x=f.ext?' target="_blank" rel="noopener"':' download';
+      const href=f.ext?f.u:'files/'+f.u;
+      h+=`<a class="arq" href="${href}"${x}>📄 ${f.n}</a>`;
     });
     h+='</div>';
   }
@@ -378,45 +347,7 @@ function o(id){
 function c(){document.getElementById('ov').classList.remove('open');document.body.style.overflow='';}
 function hov(e){if(e.target===document.getElementById('ov'))c();}
 
-function pv(u,n){
-  document.getElementById('ptitle').textContent=n;
-  document.getElementById('pdl').href='files/'+u;
-  document.getElementById('pdl').download=u;
-  const ext=u.split('.').pop().toLowerCase();
-  const pbody=document.getElementById('pbody');
-  const base=window.location.origin+window.location.pathname.replace(/\/[^/]*$/,'/');
-  const fileUrl=base+'files/'+encodeURIComponent(u);
-
-  if(ext==='txt'){
-    pbody.innerHTML='<div class="prev-txt">Carregando...</div>';
-    fetch('files/'+u)
-      .then(r=>{if(!r.ok)throw new Error(r.status);return r.text();})
-      .then(t=>{pbody.innerHTML=`<div class="prev-txt">${t.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')}</div>`;})
-      .catch(e=>{pbody.innerHTML=`<div class="prev-notsup"><span>⚠️</span><p>Erro ao carregar (${e.message})</p></div>`;});
-
-  } else if(ext==='html'){
-    pbody.innerHTML=`<iframe src="files/${encodeURIComponent(u)}" title="${n}" sandbox="allow-scripts allow-same-origin"></iframe>`;
-
-  } else if(ext==='pdf'){
-    // PDF.js via CDN — funciona 100% sem depender de serviço externo
-    const pdfjs='https://mozilla.github.io/pdf.js/web/viewer.html?file='+encodeURIComponent(fileUrl);
-    pbody.innerHTML=`<iframe src="${pdfjs}" title="${n}"></iframe>`;
-
-  } else if(['xlsx','xls','docx','doc','pptx','ppt'].includes(ext)){
-    // Microsoft Office Online Viewer — funciona com arquivos públicos no Vercel
-    const msview='https://view.officeapps.live.com/op/embed.aspx?src='+encodeURIComponent(fileUrl);
-    pbody.innerHTML=`<iframe src="${msview}" title="${n}" frameborder="0"></iframe>`;
-
-  } else {
-    pbody.innerHTML=`<div class="prev-notsup"><span>📄</span><p>Prévia não disponível para este formato.</p><a class="prev-dl" href="files/${u}" download>⬇ Baixar arquivo</a></div>`;
-  }
-
-  document.getElementById('pov').classList.add('open');
-  document.body.style.overflow='hidden';
-}
-function pcl(){document.getElementById('pov').classList.remove('open');document.body.style.overflow='';document.getElementById('pbody').innerHTML='';}
-function pc(e){if(e.target===document.getElementById('pov'))pcl();}
-document.addEventListener('keydown',e=>{if(e.key==='Escape'){if(document.getElementById('pov').classList.contains('open'))pcl();else c();}});
+document.addEventListener('keydown',e=>{if(e.key==='Escape')c();});
 
 </script>
 </body>
