@@ -578,11 +578,16 @@ function formatDateBR(isoDate) {
 let suggestionsPending = [];
 
 async function loadAiSuggestions() {
-  if (!currentUser) return;
+  if (!currentUser || !sb) return;
   try {
-    const resp = await fetch(`${API_BASE}/api/ai-suggestions/${currentUser.id}?status=pending`);
-    const data = await resp.json();
-    suggestionsPending = data.suggestions || [];
+    const { data } = await sb
+      .from('ai_suggestions')
+      .select('id,card_id,field,current_value,suggested_value,reason,status,created_at')
+      .eq('user_id', currentUser.id)
+      .eq('status', 'pending')
+      .order('created_at', { ascending: false })
+      .limit(50);
+    suggestionsPending = data || [];
     renderAiSuggestions();
   } catch {}
 }
@@ -617,26 +622,36 @@ function escHtml(str) {
 }
 
 async function handleSuggestion(id, action) {
-  if (!currentUser) return;
+  if (!currentUser || !sb) return;
   const item = document.getElementById(`sugg-${id}`);
   if (item) item.style.opacity = '0.5';
   try {
-    const resp = await fetch(`${API_BASE}/api/ai-suggestions/${id}`, {
-      method:'PATCH',
-      headers:{'Content-Type':'application/json'},
-      body: JSON.stringify({ userId: currentUser.id, action })
-    });
-    const data = await resp.json();
-    if (!resp.ok) throw new Error(data.error);
-    suggestionsPending = suggestionsPending.filter(s => s.id !== id);
+    const newStatus = action === 'approve' ? 'approved' : 'rejected';
     if (action === 'approve') {
-      // Recarregar cards do servidor para refletir mudança
-      await loadUserCards(false);
+      const sugg = suggestionsPending.find(s => s.id === id);
+      if (sugg) {
+        const existing = userCards[sugg.card_id] || {};
+        const patch = {
+          user_id: currentUser.id,
+          card_id: sugg.card_id,
+          title: sugg.field === 'title' ? sugg.suggested_value : (existing.title || sugg.card_id),
+          description: sugg.field === 'description' ? sugg.suggested_value : (existing.description || ''),
+          activity_link: sugg.field === 'activity_link' ? sugg.suggested_value : (existing.activityLink || null),
+          tags: sugg.field === 'tags' ? sugg.suggested_value : (existing.tags || null),
+          updated_at: new Date().toISOString()
+        };
+        await sb.from('user_card_content').upsert(patch, { onConflict: 'user_id,card_id' });
+        userCards[sugg.card_id] = { title: patch.title, description: patch.description, activityLink: patch.activity_link || '', lessonDate: existing.lessonDate || '', tags: patch.tags || '' };
+        applyCardToUI(sugg.card_id, patch.title, patch.description);
+      }
     }
+    await sb.from('ai_suggestions').update({ status: newStatus, updated_at: new Date().toISOString() }).eq('id', id).eq('user_id', currentUser.id);
+    suggestionsPending = suggestionsPending.filter(s => s.id !== id);
     renderAiSuggestions();
+    showToast(action === 'approve' ? '✓ Mudança aplicada' : 'Sugestão rejeitada', action === 'approve' ? 'ok' : '');
   } catch (e) {
     if (item) item.style.opacity = '1';
-    setAuthStatus(`Erro ao processar sugestão: ${e.message}`);
+    setAuthStatus(`Erro: ${e.message}`);
   }
 }
 
@@ -992,15 +1007,25 @@ function closeOnboarding(){
 }
 
 async function savePreferences(prefs){
-  if (!currentUser) return;
-  const resp = await fetch(`${API_BASE}/api/preferences/upsert`, {
-    method:'POST',
-    headers:{'Content-Type':'application/json'},
-    body: JSON.stringify({ userId: currentUser.id, ...prefs })
-  });
-  const data = await resp.json();
-  if (!resp.ok) throw new Error(data.error || 'Erro ao salvar preferências');
-  userPreferences = data.preferences;
+  if (!currentUser || !sb) return;
+  const { data, error } = await sb
+    .from('user_preferences')
+    .upsert({
+      user_id: currentUser.id,
+      turma_count: Number(prefs.turmaCount) || 1,
+      cycle_type: prefs.cycleType || 'mod12',
+      module_count: Number(prefs.moduleCount) || 1,
+      start_date: prefs.startDate || null,
+      turmas_json: Array.isArray(prefs.turmas) ? prefs.turmas : [],
+      allow_ai_edits: Boolean(prefs.allowAiEdits),
+      weekdays_json: Array.isArray(prefs.weekdays) ? prefs.weekdays : [1,3],
+      calendar_json: prefs.calendarJson || {},
+      updated_at: new Date().toISOString()
+    }, { onConflict: 'user_id' })
+    .select('turma_count,cycle_type,module_count,start_date,turmas_json,allow_ai_edits,weekdays_json,calendar_json')
+    .single();
+  if (error) throw new Error(error.message || 'Erro ao salvar preferências');
+  userPreferences = data;
   applyPreferencesLayout();
   applyCalendarDates();
 }
@@ -1027,12 +1052,15 @@ function applyCalendarDates(){
 }
 
 async function ensurePreferences(){
-  if (!currentUser) return;
-  const resp = await fetch(`${API_BASE}/api/preferences/${currentUser.id}`);
-  const data = await resp.json();
-  if (!resp.ok) throw new Error(data.error || 'Erro ao carregar preferências');
-  if (data.preferences) {
-    userPreferences = data.preferences;
+  if (!currentUser || !sb) return;
+  const { data, error } = await sb
+    .from('user_preferences')
+    .select('turma_count,cycle_type,module_count,start_date,turmas_json,allow_ai_edits,weekdays_json,calendar_json')
+    .eq('user_id', currentUser.id)
+    .maybeSingle();
+  if (error) { console.warn('ensurePreferences:', error.message); }
+  if (data) {
+    userPreferences = data;
     applyPreferencesLayout();
     applyCalendarDates();
     return;
@@ -1109,11 +1137,12 @@ async function applySessionUser(user){
   }
   if ((currentUser.email || '').toLowerCase() === MAIN_TEMPLATE_EMAIL) {
     restoreOriginalTemplateView();
-    document.getElementById('btn-add-module').style.display = 'none';
-    setAuthStatus(`Logado: ${currentUser.email} · template principal ativo`);
-  const hs = document.getElementById('header-sub');
-  if (hs) hs.textContent = 'Bem-vinda de volta, Gemi 👋 — Template principal ativo';
+    const hs = document.getElementById('header-sub');
+    if (hs) hs.textContent = 'Bem-vinda de volta, Gemi 👋 — Template original ativo';
+    // Owner também pode ter preferências configuradas
+    await ensurePreferences();
     await loadChatHistory();
+    await loadAiSuggestions();
     return;
   }
   applyEmptyTemplateView();
@@ -1187,20 +1216,23 @@ function applyCardToUI(cardId, title, description){
 }
 
 async function loadUserCards(useEmptyBase = false){
-  if (!currentUser) return;
+  if (!currentUser || !sb) return;
   try {
-    const resp = await fetch(`${API_BASE}/api/cards/${currentUser.id}`);
-    const data = await resp.json();
-    if (!resp.ok) throw new Error(data.error || 'Erro ao carregar cards');
+    const { data, error } = await sb
+      .from('user_card_content')
+      .select('card_id,title,description,activity_link,lesson_date,tags,updated_at')
+      .eq('user_id', currentUser.id);
+    if (error) throw new Error(error.message);
     if (useEmptyBase) applyEmptyTemplateView();
-    (data.cards || []).forEach(c=>{
+    (data || []).forEach(c=>{
       userCards[c.card_id] = { title: c.title, description: c.description, activityLink: c.activity_link || '', lessonDate: c.lesson_date || '', tags: c.tags || '' };
       applyCardToUI(c.card_id, c.title, c.description);
     });
     applyCalendarDates();
-    setAuthStatus(`Logado: ${currentUser.email} · ${data.cards?.length || 0} aulas personalizadas`);
+    const count = data?.length || 0;
+    setAuthStatus(`Logado: ${currentUser.email} · ${count} aulas personalizadas`);
     const hs = document.getElementById('header-sub');
-    if (hs) hs.textContent = `${data.cards?.length || 0} aulas personalizadas — clique em qualquer aula para editar`;
+    if (hs) hs.textContent = count > 0 ? `${count} aulas personalizadas — clique para editar` : 'Clique em qualquer aula para adicionar conteúdo';
   } catch (e) {
     setAuthStatus(`Logado: ${currentUser.email} (falha ao carregar cards: ${e.message})`);
   }
@@ -1230,30 +1262,30 @@ async function saveEditCard(){
   const tags = selectedTag || '';
   if (!title || !description) return setAuthStatus('Preencha título e descrição.');
   try {
-    const resp = await fetch(`${API_BASE}/api/cards/upsert`, {
-      method:'POST',
-      headers:{'Content-Type':'application/json'},
-      body: JSON.stringify({
-        userId: currentUser.id,
-        cardId: editingCardId,
+    const { data, error } = await sb
+      .from('user_card_content')
+      .upsert({
+        user_id: currentUser.id,
+        card_id: editingCardId,
         title,
         description,
-        activityLink,
-        lessonDate,
-        tags
-      })
-    });
-    const data = await resp.json();
-    if (!resp.ok) throw new Error(data.error || 'Erro ao salvar');
+        activity_link: activityLink || null,
+        lesson_date: lessonDate || null,
+        tags: tags || null,
+        updated_at: new Date().toISOString()
+      }, { onConflict: 'user_id,card_id' })
+      .select('card_id,title,description,activity_link,lesson_date,tags')
+      .single();
+    if (error) throw new Error(error.message || 'Erro ao salvar');
     userCards[editingCardId] = {
-      title: data.card.title,
-      description: data.card.description,
-      activityLink: data.card.activity_link || '',
-      lessonDate: data.card.lesson_date || '',
-      tags: data.card.tags || ''
+      title: data.title,
+      description: data.description,
+      activityLink: data.activity_link || '',
+      lessonDate: data.lesson_date || '',
+      tags: data.tags || ''
     };
-    applyCardToUI(editingCardId, data.card.title, data.card.description);
-    setAuthStatus(`Aula ${editingCardId} salva.`);
+    applyCardToUI(editingCardId, data.title, data.description);
+    showToast('✓ Aula salva', 'ok');
     document.getElementById('edit-ov').classList.remove('open');
     o(editingCardId);
   } catch (e) {
@@ -1272,12 +1304,12 @@ function appendChat(role, text){
 }
 
 async function persistChatMessage(role, content){
-  if (!currentUser) return;
+  if (!currentUser || !sb) return;
   try {
-    await fetch(`${API_BASE}/api/chat/messages`, {
-      method:'POST',
-      headers:{'Content-Type':'application/json'},
-      body: JSON.stringify({ userId: currentUser.id, role: role.toLowerCase() === 'você' ? 'user' : 'assistant', content })
+    await sb.from('chat_messages').insert({
+      user_id: currentUser.id,
+      role: role.toLowerCase() === 'você' ? 'user' : 'assistant',
+      content
     });
   } catch {}
 }
@@ -1285,14 +1317,16 @@ async function persistChatMessage(role, content){
 async function loadChatHistory(){
   const log = document.getElementById('chat-log');
   log.innerHTML = '';
-  if (!currentUser) return;
+  if (!currentUser || !sb) return;
   try {
-    const resp = await fetch(`${API_BASE}/api/chat/messages/${currentUser.id}`);
-    const data = await resp.json();
-    if (!resp.ok) throw new Error(data.error || 'Erro ao carregar chat');
-    (data.messages || []).forEach((m)=>{
-      appendChat(m.role === 'user' ? 'Você' : 'Assistente', m.content);
-    });
+    const { data, error } = await sb
+      .from('chat_messages')
+      .select('role,content,created_at')
+      .eq('user_id', currentUser.id)
+      .order('created_at', { ascending: true })
+      .limit(200);
+    if (error) throw new Error(error.message);
+    (data || []).forEach(m => appendChat(m.role === 'user' ? 'Você' : 'Assistente', m.content));
   } catch (e) {
     appendChat('Assistente', `Não foi possível carregar histórico: ${e.message}`);
   }
