@@ -19,6 +19,8 @@ app.get('/', (_req, res) => {
       'GET /api/cards/:userId',
       'POST /api/cards/upsert',
       'POST /api/chat',
+      'GET /api/chat/messages/:userId',
+      'POST /api/chat/messages',
       'GET /api/preferences/:userId',
       'POST /api/preferences/upsert'
     ]
@@ -181,6 +183,42 @@ app.post('/api/chat', async (req, res) => {
   } catch (error) {
     console.error(error);
     return res.status(500).json({ error: error.message || 'Erro no chat.' });
+  }
+});
+
+app.get('/api/chat/messages/:userId', async (req, res) => {
+  try {
+    const sb = requireSupabase();
+    const { userId } = req.params;
+    const { data, error } = await sb
+      .from('chat_messages')
+      .select('role,content,created_at')
+      .eq('user_id', userId)
+      .order('created_at', { ascending: true })
+      .limit(200);
+    if (error) return res.status(500).json({ error: error.message });
+    return res.json({ messages: data || [] });
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({ error: error.message || 'Erro ao carregar histórico do chat.' });
+  }
+});
+
+app.post('/api/chat/messages', async (req, res) => {
+  try {
+    const sb = requireSupabase();
+    const { userId, role, content } = req.body || {};
+    if (!userId || !role || !content) return res.status(400).json({ error: 'userId, role e content são obrigatórios.' });
+    const { data, error } = await sb
+      .from('chat_messages')
+      .insert({ user_id: userId, role, content })
+      .select('role,content,created_at')
+      .single();
+    if (error) return res.status(500).json({ error: error.message });
+    return res.status(201).json({ message: data });
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({ error: error.message || 'Erro ao salvar mensagem do chat.' });
   }
 });
 

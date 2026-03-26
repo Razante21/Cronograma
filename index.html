@@ -119,10 +119,16 @@
   .onb{position:fixed;inset:0;background:rgba(0,0,0,.55);display:none;align-items:center;justify-content:center;z-index:260;padding:18px}
   .onb.open{display:flex}
   .onb-card{width:100%;max-width:680px;background:var(--card);border:1px solid var(--border);border-radius:14px;padding:16px}
+  .onb-steps{display:flex;gap:8px;margin-bottom:10px}
+  .onb-dot{font-size:11px;border:1px solid var(--border);padding:4px 8px;border-radius:999px;color:var(--sub)}
+  .onb-dot.active{background:#EAF2FF;border-color:#C8DCF7;color:#1A3C8F}
+  .onb-step{display:none}
+  .onb-step.active{display:block}
   .onb-row{display:flex;gap:10px;margin-bottom:10px;flex-wrap:wrap}
   .onb-row input,.onb-row select{padding:8px 10px;border:1px solid var(--border);border-radius:8px;font-size:12px;min-width:180px}
   .onb-turmas{display:grid;grid-template-columns:1fr 1fr;gap:8px}
   .onb-foot{display:flex;justify-content:flex-end;gap:8px;margin-top:12px}
+  .tips-panel{position:fixed;left:18px;bottom:18px;background:var(--card);border:1px solid var(--border);border-radius:10px;padding:10px 12px;font-size:11px;max-width:260px;z-index:210}
 </style>
 </head>
 <body>
@@ -237,23 +243,47 @@
 <div class="onb" id="onb">
   <div class="onb-card">
     <h3 style="margin-bottom:10px">Configuração inicial do cronograma</h3>
-    <div class="onb-row">
-      <select id="onb-cycle">
-        <option value="mod12">Ciclo novo (Módulo 1 e 2)</option>
-        <option value="legacy">Ciclo passado (Básico / Intermediário / Avançado)</option>
-      </select>
-      <input id="onb-turma-count" type="number" min="1" max="10" placeholder="Quantidade de turmas">
-      <input id="onb-start-date" type="date">
+    <div class="onb-steps">
+      <span class="onb-dot active" data-stepdot="1">1. Ciclo</span>
+      <span class="onb-dot" data-stepdot="2">2. Calendário</span>
+      <span class="onb-dot" data-stepdot="3">3. Turmas</span>
     </div>
-    <div class="onb-row">
-      <input id="onb-module-count" type="number" min="1" max="2" placeholder="Quantidade de módulos (1 ou 2)">
+    <div class="onb-step active" data-step="1">
+      <div class="onb-row">
+        <select id="onb-cycle">
+          <option value="mod12">Ciclo novo (Módulo 1 e 2)</option>
+          <option value="legacy">Ciclo passado (Básico / Intermediário / Avançado)</option>
+        </select>
+        <input id="onb-turma-count" type="number" min="1" max="10" placeholder="Quantidade de turmas">
+      </div>
     </div>
-    <div id="onb-turmas" class="onb-turmas"></div>
+    <div class="onb-step" data-step="2">
+      <div class="onb-row">
+        <input id="onb-start-date" type="date">
+        <input id="onb-module-count" type="number" min="1" max="2" placeholder="Quantidade de módulos (1 ou 2)">
+      </div>
+    </div>
+    <div class="onb-step" data-step="3">
+      <p style="font-size:12px;color:var(--sub);margin-bottom:8px">Edite os nomes das turmas abaixo:</p>
+      <div id="onb-turmas" class="onb-turmas"></div>
+    </div>
     <div class="onb-foot">
       <button class="arq" type="button" id="onb-cancel">Cancelar</button>
-      <button class="arq" type="button" id="onb-save">Salvar configuração</button>
+      <button class="arq" type="button" id="onb-prev">Voltar</button>
+      <button class="arq" type="button" id="onb-next">Próximo</button>
+      <button class="arq" type="button" id="onb-save" style="display:none">Salvar configuração</button>
     </div>
   </div>
+</div>
+
+<div class="tips-panel" id="tips-panel">
+  <strong>Lembretes</strong>
+  <ul style="margin:6px 0 0 16px;line-height:1.5">
+    <li>1) Configure ciclo e turmas</li>
+    <li>2) Defina data de início</li>
+    <li>3) Edite aulas e links</li>
+    <li>4) Teste IA com permissão ligada</li>
+  </ul>
 </div>
 
 <button class="chat-fab" id="chat-fab" type="button">💬 Chat</button>
@@ -278,6 +308,7 @@ const MAIN_TEMPLATE_EMAIL = 'pcdsantos007@gmail.com';
 let sb = null;
 let currentUser = null;
 let authBusy = false;
+let onbStep = 1;
 const userCards = {};
 let userPreferences = null;
 const originalCards = [];
@@ -531,6 +562,19 @@ function renderTurmaFields(count, values = []){
   }
 }
 
+function setOnbStep(step){
+  onbStep = Math.max(1, Math.min(3, step));
+  document.querySelectorAll('.onb-step').forEach((el)=>{
+    el.classList.toggle('active', Number(el.dataset.step) === onbStep);
+  });
+  document.querySelectorAll('.onb-dot').forEach((el)=>{
+    el.classList.toggle('active', Number(el.dataset.stepdot) === onbStep);
+  });
+  document.getElementById('onb-prev').style.display = onbStep === 1 ? 'none' : '';
+  document.getElementById('onb-next').style.display = onbStep === 3 ? 'none' : '';
+  document.getElementById('onb-save').style.display = onbStep === 3 ? '' : 'none';
+}
+
 function openOnboarding(prefill = null){
   const p = prefill || { cycle_type:'mod12', turma_count:1, module_count:1, start_date:'', turmas_json:[] };
   document.getElementById('onb-cycle').value = p.cycle_type || 'mod12';
@@ -539,6 +583,7 @@ function openOnboarding(prefill = null){
   document.getElementById('onb-start-date').value = p.start_date || '';
   renderTurmaFields(p.turma_count || 1, p.turmas_json || []);
   document.getElementById('onb').classList.add('open');
+  setOnbStep(1);
 }
 
 function closeOnboarding(){
@@ -617,12 +662,14 @@ async function applySessionUser(user){
     restoreOriginalTemplateView();
     document.getElementById('btn-add-module').style.display = 'none';
     setAuthStatus(`Logado: ${currentUser.email} · template principal ativo`);
+    await loadChatHistory();
     return;
   }
   applyEmptyTemplateView();
   await ensurePreferences();
   setAuthStatus(`Logado: ${currentUser.email}`);
   await loadUserCards(true);
+  await loadChatHistory();
 }
 
 async function login(){
@@ -668,6 +715,7 @@ async function logout(){
     document.getElementById('btn-config').style.display = 'none';
     setAuthStatus('Logout realizado. Template vazio ativo.');
     syncAuthButtons();
+    document.getElementById('chat-log').innerHTML = '';
   } finally {
     setAuthBusy(false);
   }
@@ -736,12 +784,40 @@ function appendChat(role, text){
   log.scrollTop = log.scrollHeight;
 }
 
+async function persistChatMessage(role, content){
+  if (!currentUser) return;
+  try {
+    await fetch(`${API_BASE}/api/chat/messages`, {
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({ userId: currentUser.id, role: role.toLowerCase() === 'você' ? 'user' : 'assistant', content })
+    });
+  } catch {}
+}
+
+async function loadChatHistory(){
+  const log = document.getElementById('chat-log');
+  log.innerHTML = '';
+  if (!currentUser) return;
+  try {
+    const resp = await fetch(`${API_BASE}/api/chat/messages/${currentUser.id}`);
+    const data = await resp.json();
+    if (!resp.ok) throw new Error(data.error || 'Erro ao carregar chat');
+    (data.messages || []).forEach((m)=>{
+      appendChat(m.role === 'user' ? 'Você' : 'Assistente', m.content);
+    });
+  } catch (e) {
+    appendChat('Assistente', `Não foi possível carregar histórico: ${e.message}`);
+  }
+}
+
 async function sendChat(){
   const input = document.getElementById('chat-text');
   const text = input.value.trim();
   if (!text) return;
   input.value = '';
   appendChat('Você', text);
+  await persistChatMessage('Você', text);
   try {
     const allowAiEdits = document.getElementById('allow-ai-edits').checked;
     const resp = await fetch(`${API_BASE}/api/chat`, {
@@ -752,8 +828,10 @@ async function sendChat(){
     const data = await resp.json();
     if (!resp.ok) throw new Error(data.error || 'Erro no chat');
     appendChat('Assistente', data.answer || 'Sem resposta.');
+    await persistChatMessage('Assistente', data.answer || 'Sem resposta.');
   } catch (e) {
     appendChat('Assistente', `Falha: ${e.message}`);
+    await persistChatMessage('Assistente', `Falha: ${e.message}`);
   }
 }
 
@@ -767,8 +845,13 @@ document.getElementById('chat-text').addEventListener('keydown', (e)=>{ if (e.ke
 document.getElementById('auth-email').addEventListener('keydown', (e)=>{ if (e.key === 'Enter') login(); });
 document.getElementById('auth-pass').addEventListener('keydown', (e)=>{ if (e.key === 'Enter') login(); });
 document.getElementById('onb-turma-count').addEventListener('input', (e)=>renderTurmaFields(e.target.value));
+document.getElementById('onb-cycle').addEventListener('change', (e)=>{
+  if (e.target.value === 'legacy') document.getElementById('onb-module-count').value = 2;
+});
 document.getElementById('btn-config').addEventListener('click', ()=>openOnboarding(userPreferences));
 document.getElementById('onb-cancel').addEventListener('click', closeOnboarding);
+document.getElementById('onb-prev').addEventListener('click', ()=>setOnbStep(onbStep-1));
+document.getElementById('onb-next').addEventListener('click', ()=>setOnbStep(onbStep+1));
 document.getElementById('onb-save').addEventListener('click', async ()=>{
   if (!currentUser) return;
   const cycleType = document.getElementById('onb-cycle').value;

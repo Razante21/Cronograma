@@ -13,6 +13,8 @@ API mínima para:
 - `GET /api/cards/:userId`
 - `POST /api/cards/upsert`
 - `POST /api/chat`
+- `GET /api/chat/messages/:userId`
+- `POST /api/chat/messages`
 - `GET /api/preferences/:userId`
 - `POST /api/preferences/upsert`
 
