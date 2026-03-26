@@ -19,6 +19,7 @@ npm run dev
 ```
 
 > Sem `.env` preenchido, a API ainda sobe, mas endpoints que dependem de integração vão retornar erro explicando qual chave falta.
+> O loader busca `.env` nesta ordem: `ENV_FILE` (se definido), pasta atual, `backend/.env`, raiz do repositório.
 
 ## Variáveis obrigatórias
 

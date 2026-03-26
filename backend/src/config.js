@@ -1,12 +1,44 @@
 import dotenv from 'dotenv';
+import fs from 'fs';
+import path from 'path';
+import { fileURLToPath } from 'url';
 
-dotenv.config({ path: process.env.ENV_FILE || '.env' });
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+const repoRoot = path.resolve(__dirname, '..', '..');
+const backendRoot = path.resolve(__dirname, '..');
+
+const explicitEnv = process.env.ENV_FILE ? path.resolve(process.env.ENV_FILE) : null;
+const candidates = [
+  explicitEnv,
+  path.join(process.cwd(), '.env'),
+  path.join(backendRoot, '.env'),
+  path.join(repoRoot, '.env')
+].filter(Boolean);
+
+let loadedEnvPath = null;
+for (const candidate of candidates) {
+  if (fs.existsSync(candidate)) {
+    dotenv.config({ path: candidate });
+    loadedEnvPath = candidate;
+    break;
+  }
+}
+
+if (!loadedEnvPath) {
+  dotenv.config();
+}
 
 const required = ['SUPABASE_URL', 'SUPABASE_SERVICE_ROLE_KEY', 'GEMINI_API_KEY'];
 for (const key of required) {
   if (!process.env[key]) {
     console.warn(`[config] Variável ausente: ${key}`);
   }
+}
+if (loadedEnvPath) {
+  console.log(`[config] .env carregado de: ${loadedEnvPath}`);
+} else {
+  console.warn('[config] Nenhum .env encontrado automaticamente (usando apenas variáveis do ambiente).');
 }
 
 export const config = {
