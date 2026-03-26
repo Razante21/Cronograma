@@ -135,6 +135,24 @@ alter table public.schedule_templates enable row level security;
 alter table public.user_card_content enable row level security;
 alter table public.user_preferences enable row level security;
 
+drop policy if exists "profiles_select_own" on public.profiles;
+drop policy if exists "profiles_insert_own" on public.profiles;
+drop policy if exists "profiles_update_own" on public.profiles;
+drop policy if exists "templates_read_auth" on public.schedule_templates;
+drop policy if exists "user_schedules_all_own" on public.user_schedules;
+drop policy if exists "lessons_select_own" on public.lessons;
+drop policy if exists "lessons_insert_own" on public.lessons;
+drop policy if exists "lessons_update_own" on public.lessons;
+drop policy if exists "lessons_delete_own" on public.lessons;
+drop policy if exists "activities_all_own" on public.activities;
+drop policy if exists "activity_links_select_own" on public.activity_links;
+drop policy if exists "activity_links_insert_own" on public.activity_links;
+drop policy if exists "activity_links_update_own" on public.activity_links;
+drop policy if exists "activity_links_delete_own" on public.activity_links;
+drop policy if exists "chat_all_own" on public.chat_messages;
+drop policy if exists "user_card_content_all_own" on public.user_card_content;
+drop policy if exists "user_preferences_all_own" on public.user_preferences;
+
 create policy "profiles_select_own" on public.profiles
 for select using (auth.uid() = id);
 
