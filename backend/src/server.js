@@ -2,14 +2,21 @@ import express from 'express';
 import cors from 'cors';
 import { config } from './config.js';
 import { classifyActivity } from './gemini.js';
-import { supabaseAdmin } from './clients.js';
+import { requireSupabase, supabaseAdmin, gemini } from './clients.js';
 
 const app = express();
 app.use(cors());
 app.use(express.json({ limit: '5mb' }));
 
 app.get('/health', (_req, res) => {
-  res.json({ ok: true, service: 'cronograma-api' });
+  res.json({
+    ok: true,
+    service: 'cronograma-api',
+    integrations: {
+      supabase: Boolean(supabaseAdmin),
+      gemini: Boolean(gemini)
+    }
+  });
 });
 
 app.post('/api/classify', async (req, res) => {
@@ -22,7 +29,8 @@ app.post('/api/classify', async (req, res) => {
     const result = await classifyActivity({ fileName, extractedText });
 
     if (activityId) {
-      await supabaseAdmin
+      const sb = requireSupabase();
+      await sb
         .from('activities')
         .update({
           detected_theme: result.theme,
@@ -39,7 +47,7 @@ app.post('/api/classify', async (req, res) => {
     });
   } catch (error) {
     console.error(error);
-    return res.status(500).json({ error: 'Erro ao classificar atividade.' });
+    return res.status(500).json({ error: error.message || 'Erro ao classificar atividade.' });
   }
 });
 
@@ -50,7 +58,8 @@ app.post('/api/activities', async (req, res) => {
       return res.status(400).json({ error: 'userId, fileName e filePath são obrigatórios.' });
     }
 
-    const { data, error } = await supabaseAdmin
+    const sb = requireSupabase();
+    const { data, error } = await sb
       .from('activities')
       .insert({
         user_id: userId,
@@ -71,7 +80,7 @@ app.post('/api/activities', async (req, res) => {
     return res.status(201).json({ activity: data });
   } catch (error) {
     console.error(error);
-    return res.status(500).json({ error: 'Erro ao criar atividade.' });
+    return res.status(500).json({ error: error.message || 'Erro ao criar atividade.' });
   }
 });
 

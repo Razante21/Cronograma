@@ -58,6 +58,8 @@ Healthcheck:
 curl http://localhost:8787/health
 ```
 
+Se `SUPABASE_*`/`GEMINI_API_KEY` não estiverem configuradas, a API não cai mais; o `/health` mostra `integrations` como `false` e os endpoints retornam erro explicativo.
+
 ## 5) Teste de classificação Gemini
 
 ```bash

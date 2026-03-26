@@ -13,9 +13,12 @@ API mínima para:
 ## Rodando
 
 ```bash
+cp ../.env.example ../.env
 npm install
 npm run dev
 ```
+
+> Sem `.env` preenchido, a API ainda sobe, mas endpoints que dependem de integração vão retornar erro explicando qual chave falta.
 
 ## Variáveis obrigatórias
 

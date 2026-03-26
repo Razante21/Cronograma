@@ -1,4 +1,4 @@
-import { gemini } from './clients.js';
+import { requireGemini } from './clients.js';
 import { config } from './config.js';
 
 export async function classifyActivity({ fileName, extractedText }) {
@@ -15,7 +15,8 @@ Arquivo: ${fileName}
 Texto extraído (resumo): ${extractedText?.slice(0, 4000) || ''}
 `;
 
-  const response = await gemini.models.generateContent({
+  const client = requireGemini();
+  const response = await client.models.generateContent({
     model: config.geminiModel,
     contents: prompt
   });
