@@ -98,25 +98,73 @@
   /* Botão de preview nos arquivos */
 
   .arq-dl:hover{background:#DCEEFF}
-  .top-nav{max-width:980px;margin:0 auto 14px;display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap}
-  .nav-brand{font-family:'DM Mono',monospace;font-size:11px;letter-spacing:.08em;color:var(--muted);text-transform:uppercase}
-  .auth-bar{display:flex;gap:8px;flex-wrap:wrap;align-items:center;justify-content:flex-end}
-  .auth-bar input{padding:8px 10px;border:1px solid var(--border);border-radius:7px;background:#fff;font-size:12px;min-width:190px}
-  .auth-bar button{padding:8px 11px;border:1px solid #C8DCF7;background:#F0F7FF;color:#1A3C8F;border-radius:7px;font-size:12px;cursor:pointer}
-  .auth-bar button:hover{background:#DCEEFF}
-  .auth-bar button:disabled{opacity:.45;cursor:not-allowed}
-  .auth-status{font-size:11px;color:var(--sub)}
-  .chat-fab{position:fixed;right:20px;bottom:20px;background:#1A3C8F;color:#fff;border:none;border-radius:999px;padding:12px 14px;cursor:pointer;z-index:220}
-  .chat-box{position:fixed;right:20px;bottom:72px;width:360px;max-height:520px;background:var(--card);border:1px solid var(--border);border-radius:14px;box-shadow:0 12px 32px rgba(0,0,0,.2);display:none;flex-direction:column;z-index:220}
+  /* ===== TELA DE LOGIN ===== */
+  .login-screen{position:fixed;inset:0;z-index:500;background:linear-gradient(145deg,#1A2F6B 0%,#1A3C8F 50%,#2D5BB5 100%);display:flex;align-items:center;justify-content:center;padding:20px}
+  .login-screen.hidden{display:none}
+  .login-card{background:#fff;border-radius:20px;padding:40px 36px;width:100%;max-width:400px;box-shadow:0 24px 80px rgba(0,0,0,.35)}
+  .login-brand{text-align:center;margin-bottom:28px}
+  .login-logo{font-size:40px;margin-bottom:10px}
+  .login-brand h2{font-size:22px;font-weight:700;color:var(--main);margin-bottom:4px}
+  .login-brand p{font-size:13px;color:var(--sub)}
+  .login-input{display:block;width:100%;padding:12px 14px;border:1.5px solid var(--border);border-radius:9px;font-size:13px;background:#fafafa;margin-bottom:10px;transition:border-color .15s;font-family:inherit;box-sizing:border-box}
+  .login-input:focus{outline:none;border-color:#1A3C8F;background:#fff}
+  .login-btn-primary{display:block;width:100%;padding:13px;background:#1A3C8F;color:#fff;border:none;border-radius:9px;font-size:14px;font-weight:600;cursor:pointer;margin-bottom:8px;transition:background .15s;font-family:inherit}
+  .login-btn-primary:hover{background:#163080}
+  .login-btn-primary:disabled{opacity:.5;cursor:not-allowed}
+  .login-btn-secondary{display:block;width:100%;padding:12px;background:transparent;color:var(--sub);border:1.5px solid var(--border);border-radius:9px;font-size:13px;cursor:pointer;transition:all .15s;font-family:inherit}
+  .login-btn-secondary:hover{border-color:#1A3C8F;color:#1A3C8F}
+  .login-btn-secondary:disabled{opacity:.5;cursor:not-allowed}
+  .login-status-msg{text-align:center;font-size:12px;color:#8C1A1A;margin-top:10px;min-height:18px}
+  .login-divider{text-align:center;font-size:11px;color:var(--muted);margin:8px 0}
+  /* ===== NAVBAR DO APP ===== */
+  .app-nav{position:sticky;top:0;z-index:100;background:#fff;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:10px;padding:0 24px;height:56px;box-shadow:0 1px 8px rgba(0,0,0,.06)}
+  .nav-logo{font-family:'DM Mono',monospace;font-size:13px;font-weight:500;color:#1A3C8F;letter-spacing:.04em;flex-shrink:0}
+  .nav-sep{width:1px;height:20px;background:var(--border);flex-shrink:0}
+  .nav-user-email{font-size:12px;color:var(--sub);flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .nav-actions{display:flex;gap:6px;align-items:center;flex-shrink:0}
+  .nav-btn{padding:7px 12px;border-radius:8px;font-size:12px;font-weight:500;cursor:pointer;border:1.5px solid transparent;font-family:inherit;transition:all .15s;white-space:nowrap}
+  .nav-btn-ghost{background:transparent;color:var(--sub);border-color:var(--border)}
+  .nav-btn-ghost:hover{color:var(--main);border-color:#aaa}
+  .nav-btn-blue{background:#EAF2FF;color:#1A3C8F;border-color:#C8DCF7}
+  .nav-btn-blue:hover{background:#dce8ff}
+  .nav-btn-red{background:#FFECEC;color:#8C1A1A;border-color:#F5C0C0}
+  .nav-btn-red:hover{background:#ffd8d8}
+  .ai-toggle-pill{display:flex;align-items:center;gap:7px;font-size:12px;color:var(--sub);cursor:pointer;padding:6px 11px;border-radius:20px;border:1.5px solid var(--border);transition:all .2s;white-space:nowrap;user-select:none}
+  .ai-toggle-pill:hover{border-color:#aaa}
+  .ai-toggle-pill.ai-on{background:#FFF0F5;border-color:#F5C0D0;color:#8C1A3E;font-weight:600}
+  .ai-dot{width:7px;height:7px;border-radius:50%;background:var(--muted);flex-shrink:0;transition:background .2s}
+  .ai-toggle-pill.ai-on .ai-dot{background:#D4386A}
+  /* ===== CHAT REDESIGN ===== */
+  .chat-fab{position:fixed;right:24px;bottom:24px;background:linear-gradient(135deg,#1A3C8F,#2D5BB5);color:#fff;border:none;border-radius:999px;padding:13px 20px;cursor:pointer;z-index:220;font-size:13px;font-weight:600;box-shadow:0 4px 20px rgba(26,60,143,.4);display:flex;align-items:center;gap:8px;transition:transform .15s,box-shadow .15s}
+  .chat-fab:hover{transform:translateY(-2px);box-shadow:0 6px 24px rgba(26,60,143,.5)}
+  .chat-box{position:fixed;right:24px;bottom:84px;width:420px;max-height:580px;background:#fff;border:1px solid var(--border);border-radius:18px;box-shadow:0 16px 50px rgba(0,0,0,.18);display:none;flex-direction:column;z-index:220;overflow:hidden}
   .chat-box.open{display:flex}
-  .chat-head{padding:10px 12px;border-bottom:1px solid var(--border);font-size:12px;font-weight:600;display:flex;justify-content:space-between;align-items:center}
-  .chat-log{padding:10px;overflow:auto;flex:1;font-size:12px;display:flex;flex-direction:column;gap:8px}
-  .chat-msg{line-height:1.45;max-width:86%;padding:8px 10px;border-radius:10px}
-  .chat-msg.user{align-self:flex-end;background:#EAF2FF;border:1px solid #C8DCF7}
-  .chat-msg.assistant{align-self:flex-start;background:#F4F3EF;border:1px solid var(--border)}
-  .chat-input{display:flex;gap:6px;padding:10px;border-top:1px solid var(--border)}
-  .chat-input input{flex:1;padding:8px 10px;border:1px solid var(--border);border-radius:8px;font-size:12px}
-  .chat-input button{padding:8px 10px;border:1px solid #C8DCF7;background:#F0F7FF;border-radius:8px;font-size:12px;cursor:pointer}
+  .chat-head{padding:14px 16px;background:linear-gradient(135deg,#1A3C8F,#2D5BB5);display:flex;justify-content:space-between;align-items:center}
+  .chat-head-info{display:flex;align-items:center;gap:10px}
+  .chat-head-avatar{width:34px;height:34px;background:rgba(255,255,255,.2);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:16px}
+  .chat-head-title{color:#fff;font-size:13px;font-weight:600}
+  .chat-head-sub{color:rgba(255,255,255,.7);font-size:10px;margin-top:1px}
+  .chat-head button{background:rgba(255,255,255,.15);border:none;border-radius:50%;width:28px;height:28px;cursor:pointer;color:#fff;font-size:14px;display:flex;align-items:center;justify-content:center;transition:background .15s}
+  .chat-head button:hover{background:rgba(255,255,255,.3)}
+  .chat-log{padding:14px;overflow-y:auto;flex:1;display:flex;flex-direction:column;gap:10px;background:#F8F8F6}
+  .chat-msg{line-height:1.5;max-width:82%;padding:10px 13px;border-radius:14px;font-size:12.5px;word-break:break-word}
+  .chat-msg.user{align-self:flex-end;background:#1A3C8F;color:#fff;border-radius:14px 14px 3px 14px}
+  .chat-msg.assistant{align-self:flex-start;background:#fff;border:1px solid var(--border);color:var(--main);border-radius:14px 14px 14px 3px;box-shadow:0 1px 4px rgba(0,0,0,.07)}
+  .chat-typing{align-self:flex-start;background:#fff;border:1px solid var(--border);border-radius:14px;padding:10px 14px;display:flex;gap:4px;align-items:center}
+  .chat-typing span{width:6px;height:6px;background:var(--muted);border-radius:50%;animation:blink .9s infinite alternate}
+  .chat-typing span:nth-child(2){animation-delay:.22s}
+  .chat-typing span:nth-child(3){animation-delay:.44s}
+  @keyframes blink{from{opacity:.3;transform:scale(.8)}to{opacity:1;transform:scale(1)}}
+  .chat-input-area{display:flex;gap:8px;padding:12px;border-top:1px solid var(--border);background:#fff}
+  .chat-input-area input{flex:1;padding:10px 13px;border:1.5px solid var(--border);border-radius:10px;font-size:13px;font-family:inherit;transition:border-color .15s}
+  .chat-input-area input:focus{outline:none;border-color:#1A3C8F}
+  .chat-send-btn{padding:10px 16px;background:#1A3C8F;color:#fff;border:none;border-radius:10px;font-size:13px;font-weight:600;cursor:pointer;transition:background .15s;font-family:inherit}
+  .chat-send-btn:hover{background:#163080}
+  /* ===== TOAST ===== */
+  .toast{position:fixed;bottom:90px;left:50%;transform:translateX(-50%) translateY(20px);background:#1A3C8F;color:#fff;padding:10px 22px;border-radius:999px;font-size:12px;font-weight:600;z-index:500;opacity:0;transition:all .3s;pointer-events:none;white-space:nowrap;box-shadow:0 4px 16px rgba(0,0,0,.2)}
+  .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+  .toast.ok{background:#2E8B57}
+  .toast.err{background:#D43838}
   .onb{position:fixed;inset:0;background:rgba(0,0,0,.55);display:none;align-items:center;justify-content:center;z-index:260;padding:18px}
   .onb.open{display:flex}
   .onb-card{width:100%;max-width:680px;background:var(--card);border:1px solid var(--border);border-radius:14px;padding:16px}
@@ -181,29 +229,46 @@
 </style>
 </head>
 <body>
-<header>
-  <div class="hl">FIEC · Inclusão Digital 2025</div>
-  <h1>Cronograma de Aulas</h1>
-  <div class="hs">23/02 → 04/05 · Segundas e Quartas · 20/04 feriado (emenda Tiradentes) · clique em qualquer aula para ver o plano</div>
-</header>
+<!-- TELA DE LOGIN -->
+<div id="login-screen" class="login-screen">
+  <div class="login-card">
+    <div class="login-brand">
+      <div class="login-logo">📅</div>
+      <h2>Cronograma FIEC</h2>
+      <p>Inclusão Digital 2026</p>
+    </div>
+    <input id="auth-email" class="login-input" type="email" placeholder="Seu e-mail" autocomplete="email">
+    <input id="auth-pass" class="login-input" type="password" placeholder="Sua senha" autocomplete="current-password">
+    <button id="btn-login" class="login-btn-primary" type="button">Entrar</button>
+    <div class="login-divider">ou</div>
+    <button id="btn-signup" class="login-btn-secondary" type="button">Criar conta</button>
+    <div id="auth-status" class="login-status-msg"></div>
+  </div>
+</div>
 
-<nav class="top-nav">
-  <div class="nav-brand">Cronograma · Conta</div>
-  <div class="auth-bar">
-    <input id="auth-email" type="email" placeholder="Seu e-mail">
-    <input id="auth-pass" type="password" placeholder="Sua senha">
-    <button id="btn-login" type="button">Entrar</button>
-    <button id="btn-signup" type="button">Cadastrar</button>
-    <button id="btn-logout" type="button">Sair</button>
-    <button id="btn-config" type="button" style="display:none">⚙ Configurar</button>
-    <button id="btn-add-module" type="button" style="display:none">+ Adicionar módulo</button>
-    <label class="auth-status" style="display:inline-flex;gap:6px;align-items:center">
-      <input type="checkbox" id="allow-ai-edits"> Permitir IA alterar
+<!-- NAVBAR DO APP (visível só após login) -->
+<nav class="app-nav" id="app-nav" style="display:none">
+  <span class="nav-logo">Cronograma FIEC</span>
+  <div class="nav-sep"></div>
+  <span class="nav-user-email" id="auth-user"></span>
+  <div class="nav-actions">
+    <button class="nav-btn nav-btn-ghost" id="btn-add-module" type="button" style="display:none">+ Módulo</button>
+    <label class="ai-toggle-pill" id="ai-toggle-pill" title="Quando ligada, a IA aplica mudanças automaticamente">
+      <div class="ai-dot"></div>
+      <input type="checkbox" id="allow-ai-edits" style="display:none">
+      <span id="ai-label">IA desligada</span>
     </label>
-    <span id="auth-user" class="auth-status" style="display:none"></span>
-    <span id="auth-status" class="auth-status">Template vazio ativo (faça login para sincronizar)</span>
+    <button class="nav-btn nav-btn-blue" id="btn-config" type="button" style="display:none">⚙ Configurar</button>
+    <button class="nav-btn nav-btn-red" id="btn-logout" type="button">Sair</button>
   </div>
 </nav>
+
+<!-- HEADER DO CRONOGRAMA -->
+<header>
+  <div class="hl">FIEC · Inclusão Digital 2026</div>
+  <h1>Cronograma de Aulas</h1>
+  <div class="hs" id="header-sub">Faça login para ver seu cronograma personalizado</div>
+</header>
 
 <div class="grid">
 
@@ -354,15 +419,6 @@
   </div>
 </div>
 
-<div class="tips-panel" id="tips-panel">
-  <strong>Lembretes</strong>
-  <ul style="margin:6px 0 0 16px;line-height:1.5">
-    <li>1) Configure ciclo e turmas</li>
-    <li>2) Defina data de início</li>
-    <li>3) Edite aulas e links</li>
-    <li>4) Teste IA com permissão ligada</li>
-  </ul>
-</div>
 
 <div class="edit-ov" id="edit-ov">
   <div class="edit-card">
@@ -405,13 +461,24 @@
   <div class="sugg-list" id="sugg-list"><div class="sugg-empty">Nenhuma sugestão pendente.</div></div>
 </div>
 
-<button class="chat-fab" id="chat-fab" type="button">💬 Chat</button>
+<div class="toast" id="toast"></div>
+
+<button class="chat-fab" id="chat-fab" type="button">💬 Chat IA</button>
 <div class="chat-box" id="chat-box">
-  <div class="chat-head">Assistente <button type="button" id="chat-close">✕</button></div>
+  <div class="chat-head">
+    <div class="chat-head-info">
+      <div class="chat-head-avatar">🤖</div>
+      <div>
+        <div class="chat-head-title">Assistente IA</div>
+        <div class="chat-head-sub" id="chat-head-sub">Gemini · pode editar aulas</div>
+      </div>
+    </div>
+    <button type="button" id="chat-close">✕</button>
+  </div>
   <div class="chat-log" id="chat-log"></div>
-  <div class="chat-input">
-    <input id="chat-text" type="text" placeholder="Digite sua mensagem...">
-    <button type="button" id="chat-send">Enviar</button>
+  <div class="chat-input-area">
+    <input id="chat-text" type="text" placeholder="Peça para editar uma aula, tire dúvidas...">
+    <button type="button" id="chat-send" class="chat-send-btn">➤</button>
   </div>
 </div>
 
@@ -433,6 +500,17 @@ const userCards = {};
 let userPreferences = null;
 const originalCards = [];
 const originalPills = [];
+
+// ===== TOAST =====
+let toastTimer = null;
+function showToast(msg, type = '') {
+  const el = document.getElementById('toast');
+  if (!el) return;
+  el.textContent = msg;
+  el.className = `toast show${type ? ' ' + type : ''}`;
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => el.classList.remove('show'), 3000);
+}
 
 // ===== FEATURE: Preview Google robusto =====
 function toGoogleEmbedUrl(url) {
@@ -828,6 +906,7 @@ function applyPreferencesLayout(){
     if (rightTitle) rightTitle.textContent = 'Turma Avançada — Módulo III';
   }
   document.getElementById('allow-ai-edits').checked = !!userPreferences.allow_ai_edits;
+  updateAiToggleUI();
   document.getElementById('btn-config').style.display = '';
 }
 
@@ -975,15 +1054,35 @@ function setAuthBusy(isBusy){
 
 function syncAuthButtons(){
   const logged = !!currentUser;
-  document.getElementById('auth-email').style.display = logged ? 'none' : '';
-  document.getElementById('auth-pass').style.display = logged ? 'none' : '';
-  document.getElementById('btn-login').style.display = logged ? 'none' : '';
-  document.getElementById('btn-signup').style.display = logged ? 'none' : '';
-  document.getElementById('btn-logout').style.display = logged ? '' : 'none';
+  // Login screen vs App
+  document.getElementById('login-screen').classList.toggle('hidden', logged);
+  const appNav = document.getElementById('app-nav');
+  if (appNav) appNav.style.display = logged ? '' : 'none';
+  // Usuário na navbar
   const userEl = document.getElementById('auth-user');
-  userEl.style.display = logged ? '' : 'none';
-  userEl.textContent = logged ? `Conta: ${currentUser.email}` : '';
-  if (!logged) document.getElementById('btn-config').style.display = 'none';
+  if (userEl) userEl.textContent = logged ? currentUser.email : '';
+  // Botões
+  document.getElementById('btn-logout').style.display = logged ? '' : 'none';
+  if (!logged) {
+    document.getElementById('btn-config').style.display = 'none';
+    document.getElementById('btn-add-module').style.display = 'none';
+  }
+  // AI toggle pill state
+  updateAiToggleUI();
+}
+
+function updateAiToggleUI(){
+  const cb = document.getElementById('allow-ai-edits');
+  const pill = document.getElementById('ai-toggle-pill');
+  const label = document.getElementById('ai-label');
+  if (!pill || !cb) return;
+  if (cb.checked) {
+    pill.classList.add('ai-on');
+    label.textContent = 'IA ligada';
+  } else {
+    pill.classList.remove('ai-on');
+    label.textContent = 'IA desligada';
+  }
 }
 
 async function initAuth(){
@@ -1012,6 +1111,8 @@ async function applySessionUser(user){
     restoreOriginalTemplateView();
     document.getElementById('btn-add-module').style.display = 'none';
     setAuthStatus(`Logado: ${currentUser.email} · template principal ativo`);
+  const hs = document.getElementById('header-sub');
+  if (hs) hs.textContent = 'Bem-vinda de volta, Gemi 👋 — Template principal ativo';
     await loadChatHistory();
     return;
   }
@@ -1098,6 +1199,8 @@ async function loadUserCards(useEmptyBase = false){
     });
     applyCalendarDates();
     setAuthStatus(`Logado: ${currentUser.email} · ${data.cards?.length || 0} aulas personalizadas`);
+    const hs = document.getElementById('header-sub');
+    if (hs) hs.textContent = `${data.cards?.length || 0} aulas personalizadas — clique em qualquer aula para editar`;
   } catch (e) {
     setAuthStatus(`Logado: ${currentUser.email} (falha ao carregar cards: ${e.message})`);
   }
@@ -1222,10 +1325,29 @@ async function sendChat(){
     const answer = data.answer || 'Sem resposta.';
     appendChat('Assistente', answer);
     await persistChatMessage('Assistente', answer);
-    // Se vieram sugestões, atualizar o painel
-    if (data.suggestionCount > 0) {
-      await loadAiSuggestions();
-      appendChat('Assistente', `💡 ${data.suggestionCount} sugestão(ões) criada(s). Veja o painel de sugestões (↗).`);
+    // Se vieram sugestões da IA
+    if (data.suggestions && data.suggestions.length > 0) {
+      const allowAI = document.getElementById('allow-ai-edits').checked;
+      if (allowAI) {
+        // Auto-aplicar quando IA tem permissão
+        for (const s of data.suggestions) {
+          if (!userCards[s.card_id]) userCards[s.card_id] = {};
+          if (s.field === 'title') userCards[s.card_id].title = s.suggested_value;
+          else if (s.field === 'description') userCards[s.card_id].description = s.suggested_value;
+          else if (s.field === 'activity_link') userCards[s.card_id].activityLink = s.suggested_value;
+          else if (s.field === 'tags') userCards[s.card_id].tags = s.suggested_value;
+          applyCardToUI(s.card_id, userCards[s.card_id].title || '', userCards[s.card_id].description || '');
+          // Aprovar no banco em background
+          fetch(`${API_BASE}/api/ai-suggestions/${s.id}`, {
+            method:'PATCH',headers:{'Content-Type':'application/json'},
+            body:JSON.stringify({userId:currentUser.id,action:'approve'})
+          }).catch(()=>{});
+        }
+        showToast(`✓ IA aplicou ${data.suggestions.length} mudança(s)`, 'ok');
+      } else {
+        await loadAiSuggestions();
+        showToast(`💡 ${data.suggestions.length} sugestão(ões) pendente(s) — clique no badge`, '');
+      }
     }
   } catch (e) {
     appendChat('Assistente', `Falha: ${e.message}`);
@@ -1291,18 +1413,25 @@ document.getElementById('btn-add-module').addEventListener('click', async ()=>{
     allowAiEdits: userPreferences.allow_ai_edits
   });
 });
-document.getElementById('allow-ai-edits').addEventListener('change', async (e)=>{
+document.getElementById('ai-toggle-pill').addEventListener('click', async ()=>{
   if (!currentUser || !userPreferences) return;
-  userPreferences.allow_ai_edits = e.target.checked;
+  const cb = document.getElementById('allow-ai-edits');
+  cb.checked = !cb.checked;
+  userPreferences.allow_ai_edits = cb.checked;
+  updateAiToggleUI();
   await savePreferences({
     turmaCount: userPreferences.turma_count,
     cycleType: userPreferences.cycle_type,
     moduleCount: userPreferences.module_count,
     startDate: userPreferences.start_date || null,
     turmas: userPreferences.turmas_json || [],
-    allowAiEdits: userPreferences.allow_ai_edits
+    allowAiEdits: userPreferences.allow_ai_edits,
+    weekdays: userPreferences.weekdays_json || [1,3],
+    calendarJson: userPreferences.calendar_json || {}
   });
+  showToast(cb.checked ? '✓ IA ligada — ela pode editar aulas' : 'IA desligada', cb.checked ? 'ok' : '');
 });
+document.getElementById('allow-ai-edits').addEventListener('change', () => updateAiToggleUI());
 document.getElementById('edit-ov').addEventListener('click', (e)=>{
   if (e.target === document.getElementById('edit-ov')) document.getElementById('edit-ov').classList.remove('open');
 });
