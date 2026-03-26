@@ -35,6 +35,7 @@ cp app_config.example.js app_config.js
 E preencha no `app_config.js`:
 - `SUPABASE_URL`
 - `SUPABASE_ANON_KEY`
+- `API_BASE` (ex.: `http://localhost:8787`)
 
 ## 3) Banco (Supabase)
 
@@ -43,6 +44,7 @@ No SQL Editor do Supabase, rode:
 - `supabase/schema.sql`
 
 Também crie um bucket privado chamado `activities`.
+Depois de atualizar o schema, rode novamente sua API para habilitar os endpoints de personalização de cards.
 
 ## 4) Rodar API local
 

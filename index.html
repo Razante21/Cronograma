@@ -212,9 +212,11 @@
 window.APP_CONFIG = window.APP_CONFIG || {};
 const SUPABASE_URL = window.APP_CONFIG.SUPABASE_URL || '';
 const SUPABASE_ANON_KEY = window.APP_CONFIG.SUPABASE_ANON_KEY || '';
+const API_BASE = (window.APP_CONFIG.API_BASE || 'http://localhost:8787').replace(/\/+$/,'');
 const EMPTY_TEMPLATE_BY_DEFAULT = true;
 let sb = null;
 let currentUser = null;
+const userCards = {};
 
 const D = {
   'i1':{m:'Aula 1 · 23/02 Seg',t:'Entender o que sabem + Formatação Simples',done:true,
@@ -355,6 +357,12 @@ function o(id){
     return;
   }
   const a=D[id]; if(!a) return;
+  const override = userCards[id];
+  if (override) {
+    a.t = override.title;
+    a.tp = [override.description];
+    a.done = false;
+  }
   document.getElementById('mm').textContent=a.m;
   document.getElementById('mt').textContent=a.t;
   let h='';
@@ -375,6 +383,7 @@ function o(id){
     h+='</div>';
   }
   if(a.obs) h+=`<div class="ms"><div class="obs">💡 ${a.obs}</div></div>`;
+  h+=`<div class="ms"><button class="arq" type="button" onclick="editCard('${id}')">✏️ Editar conteúdo desta aula</button></div>`;
   document.getElementById('mb').innerHTML=h;
   document.getElementById('ov').classList.add('open');
   document.body.style.overflow='hidden';
@@ -425,6 +434,7 @@ async function login(){
   const { data } = await sb.auth.getSession();
   currentUser = data?.session?.user || null;
   setAuthStatus(`Logado: ${currentUser?.email || ''}`);
+  await loadUserCards();
 }
 
 async function signup(){
@@ -440,7 +450,58 @@ async function logout(){
   if (!sb) return;
   await sb.auth.signOut();
   currentUser = null;
+  Object.keys(userCards).forEach(k=>delete userCards[k]);
+  applyEmptyTemplateView();
   setAuthStatus('Logout realizado. Template vazio ativo.');
+}
+
+function applyCardToUI(cardId, title, description){
+  userCards[cardId] = { title, description };
+  const card = [...document.querySelectorAll('.ac')].find(el => el.getAttribute('onclick') === `o('${cardId}')`);
+  if (!card) return;
+  const nm = card.querySelector('.nm');
+  const desc = card.querySelector('.desc');
+  if (nm) nm.textContent = title;
+  if (desc) desc.textContent = description;
+  card.classList.remove('done');
+}
+
+async function loadUserCards(){
+  if (!currentUser) return;
+  try {
+    const resp = await fetch(`${API_BASE}/api/cards/${currentUser.id}`);
+    const data = await resp.json();
+    if (!resp.ok) throw new Error(data.error || 'Erro ao carregar cards');
+    applyEmptyTemplateView();
+    (data.cards || []).forEach(c=>applyCardToUI(c.card_id, c.title, c.description));
+    setAuthStatus(`Logado: ${currentUser.email} · ${data.cards?.length || 0} aulas personalizadas`);
+  } catch (e) {
+    setAuthStatus(`Logado: ${currentUser.email} (falha ao carregar cards: ${e.message})`);
+  }
+}
+
+async function editCard(id){
+  if (!currentUser) return;
+  const baseTitle = userCards[id]?.title || '';
+  const baseDesc = userCards[id]?.description || '';
+  const title = prompt('Título da aula:', baseTitle);
+  if (!title) return;
+  const description = prompt('Descrição da aula:', baseDesc);
+  if (!description) return;
+  try {
+    const resp = await fetch(`${API_BASE}/api/cards/upsert`, {
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({ userId: currentUser.id, cardId: id, title, description })
+    });
+    const data = await resp.json();
+    if (!resp.ok) throw new Error(data.error || 'Erro ao salvar');
+    applyCardToUI(id, data.card.title, data.card.description);
+    setAuthStatus(`Salvo com sucesso: ${id}`);
+    o(id);
+  } catch (e) {
+    setAuthStatus(`Falha ao salvar ${id}: ${e.message}`);
+  }
 }
 
 document.getElementById('btn-login').addEventListener('click', login);

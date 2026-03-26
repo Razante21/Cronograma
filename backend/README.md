@@ -10,6 +10,8 @@ API mínima para:
 - `GET /`
 - `POST /api/activities`
 - `POST /api/classify`
+- `GET /api/cards/:userId`
+- `POST /api/cards/upsert`
 
 ## Rodando
 

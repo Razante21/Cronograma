@@ -76,6 +76,16 @@ create table if not exists public.chat_messages (
   created_at timestamptz not null default now()
 );
 
+create table if not exists public.user_card_content (
+  id uuid primary key default gen_random_uuid(),
+  user_id uuid not null references auth.users(id) on delete cascade,
+  card_id text not null,
+  title text not null,
+  description text not null,
+  updated_at timestamptz not null default now(),
+  unique(user_id, card_id)
+);
+
 create or replace function public.set_updated_at()
 returns trigger
 language plpgsql
@@ -103,6 +113,7 @@ alter table public.activities enable row level security;
 alter table public.activity_links enable row level security;
 alter table public.chat_messages enable row level security;
 alter table public.schedule_templates enable row level security;
+alter table public.user_card_content enable row level security;
 
 create policy "profiles_select_own" on public.profiles
 for select using (auth.uid() = id);
@@ -195,4 +206,7 @@ for delete using (
 );
 
 create policy "chat_all_own" on public.chat_messages
+for all using (auth.uid() = user_id) with check (auth.uid() = user_id);
+
+create policy "user_card_content_all_own" on public.user_card_content
 for all using (auth.uid() = user_id) with check (auth.uid() = user_id);

@@ -12,7 +12,13 @@ app.get('/', (_req, res) => {
   res.status(200).json({
     ok: true,
     message: 'cronograma-api online',
-    endpoints: ['GET /health', 'POST /api/activities', 'POST /api/classify']
+    endpoints: [
+      'GET /health',
+      'POST /api/activities',
+      'POST /api/classify',
+      'GET /api/cards/:userId',
+      'POST /api/cards/upsert'
+    ]
   });
 });
 
@@ -89,6 +95,53 @@ app.post('/api/activities', async (req, res) => {
   } catch (error) {
     console.error(error);
     return res.status(500).json({ error: error.message || 'Erro ao criar atividade.' });
+  }
+});
+
+app.get('/api/cards/:userId', async (req, res) => {
+  try {
+    const { userId } = req.params;
+    const sb = requireSupabase();
+    const { data, error } = await sb
+      .from('user_card_content')
+      .select('card_id,title,description,updated_at')
+      .eq('user_id', userId);
+
+    if (error) return res.status(500).json({ error: error.message });
+    return res.json({ cards: data || [] });
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({ error: error.message || 'Erro ao buscar cards.' });
+  }
+});
+
+app.post('/api/cards/upsert', async (req, res) => {
+  try {
+    const { userId, cardId, title, description } = req.body || {};
+    if (!userId || !cardId || !title || !description) {
+      return res.status(400).json({ error: 'userId, cardId, title e description são obrigatórios.' });
+    }
+    const sb = requireSupabase();
+    const { data, error } = await sb
+      .from('user_card_content')
+      .upsert(
+        {
+          user_id: userId,
+          card_id: cardId,
+          title,
+          description,
+          updated_at: new Date().toISOString()
+        },
+        { onConflict: 'user_id,card_id' }
+      )
+      .select('card_id,title,description,updated_at')
+      .single();
+
+    if (error) return res.status(500).json({ error: error.message });
+    return res.json({ card: data });
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({ error: error.message || 'Erro ao salvar card.' });
   }
 });
 
