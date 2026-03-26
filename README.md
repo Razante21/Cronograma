@@ -45,6 +45,7 @@ No SQL Editor do Supabase, rode:
 
 Também crie um bucket privado chamado `activities`.
 Depois de atualizar o schema, rode novamente sua API para habilitar os endpoints de personalização de cards.
+Essa atualização também inclui campo de link da atividade por aula (`activity_link`) e o endpoint de chat (`POST /api/chat`).
 
 ## 4) Rodar API local
 

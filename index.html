@@ -103,6 +103,16 @@
   .auth-bar button{padding:8px 11px;border:1px solid #C8DCF7;background:#F0F7FF;color:#1A3C8F;border-radius:7px;font-size:12px;cursor:pointer}
   .auth-bar button:hover{background:#DCEEFF}
   .auth-status{font-size:11px;color:var(--sub)}
+  .chat-fab{position:fixed;right:20px;bottom:20px;background:#1A3C8F;color:#fff;border:none;border-radius:999px;padding:12px 14px;cursor:pointer;z-index:220}
+  .chat-box{position:fixed;right:20px;bottom:72px;width:320px;max-height:420px;background:var(--card);border:1px solid var(--border);border-radius:12px;box-shadow:0 12px 32px rgba(0,0,0,.2);display:none;flex-direction:column;z-index:220}
+  .chat-box.open{display:flex}
+  .chat-head{padding:10px 12px;border-bottom:1px solid var(--border);font-size:12px;font-weight:600;display:flex;justify-content:space-between;align-items:center}
+  .chat-log{padding:10px;overflow:auto;flex:1;font-size:12px}
+  .chat-msg{margin-bottom:8px;line-height:1.45}
+  .chat-msg b{color:#1A3C8F}
+  .chat-input{display:flex;gap:6px;padding:10px;border-top:1px solid var(--border)}
+  .chat-input input{flex:1;padding:8px 10px;border:1px solid var(--border);border-radius:8px;font-size:12px}
+  .chat-input button{padding:8px 10px;border:1px solid #C8DCF7;background:#F0F7FF;border-radius:8px;font-size:12px;cursor:pointer}
 </style>
 </head>
 <body>
@@ -203,6 +213,16 @@
       <button class="mc" onclick="c()">✕</button>
     </div>
     <div class="mb" id="mb"></div>
+  </div>
+</div>
+
+<button class="chat-fab" id="chat-fab" type="button">💬 Chat</button>
+<div class="chat-box" id="chat-box">
+  <div class="chat-head">Assistente <button type="button" id="chat-close">✕</button></div>
+  <div class="chat-log" id="chat-log"></div>
+  <div class="chat-input">
+    <input id="chat-text" type="text" placeholder="Digite sua mensagem...">
+    <button type="button" id="chat-send">Enviar</button>
   </div>
 </div>
 
@@ -357,32 +377,26 @@ function o(id){
     return;
   }
   const a=D[id]; if(!a) return;
-  const override = userCards[id];
-  if (override) {
-    a.t = override.title;
-    a.tp = [override.description];
-    a.done = false;
-  }
-  document.getElementById('mm').textContent=a.m;
-  document.getElementById('mt').textContent=a.t;
+  const override = userCards[id] || {};
+  const display = {
+    m: a.m,
+    t: override.title || `${a.an || 'Aula'} sem título`,
+    tp: [override.description || 'Sem descrição ainda. Clique em editar para preencher.'],
+    arq: [],
+    activityLink: override.activityLink || ''
+  };
+  document.getElementById('mm').textContent=display.m;
+  document.getElementById('mt').textContent=display.t;
   let h='';
-  if(a.done) h+='<div class="ms"><div class="done-box">✅ Aula já realizada</div></div>';
-  if(a.enc)  h+='<div class="ms"><div class="enc-box">🍕 Dia de comida — sem matéria!</div></div>';
-  if(a.tp){
+  if(display.tp){
     h+='<div class="ms"><div class="mst">O que passar</div>';
-    a.tp.forEach(t=>{h+=`<div class="tp"><span class="tb">→</span><span>${t}</span></div>`;});
+    display.tp.forEach(t=>{h+=`<div class="tp"><span class="tb">→</span><span>${t}</span></div>`;});
     h+='</div>';
   }
-  if(a.arq&&a.arq.length){
-    h+='<div class="ms"><div class="mst">Arquivos</div>';
-    a.arq.forEach(f=>{
-      const x=f.ext?' target="_blank" rel="noopener"':' download';
-      const href=f.ext?f.u:'files/'+f.u;
-      h+=`<a class="arq" href="${href}"${x}>📄 ${f.n}</a>`;
-    });
-    h+='</div>';
+  if (display.activityLink) {
+    h+=`<div class="ms"><div class="mst">Atividade</div><a class="arq" href="${display.activityLink}" target="_blank" rel="noopener">🔗 Abrir atividade</a></div>`;
+    h+=`<div class="ms"><iframe src="${display.activityLink}" style="width:100%;height:260px;border:1px solid #ddd;border-radius:8px;background:#fff"></iframe></div>`;
   }
-  if(a.obs) h+=`<div class="ms"><div class="obs">💡 ${a.obs}</div></div>`;
   h+=`<div class="ms"><button class="arq" type="button" onclick="editCard('${id}')">✏️ Editar conteúdo desta aula</button></div>`;
   document.getElementById('mb').innerHTML=h;
   document.getElementById('ov').classList.add('open');
@@ -456,7 +470,7 @@ async function logout(){
 }
 
 function applyCardToUI(cardId, title, description){
-  userCards[cardId] = { title, description };
+  userCards[cardId] = { ...(userCards[cardId] || {}), title, description };
   const card = [...document.querySelectorAll('.ac')].find(el => el.getAttribute('onclick') === `o('${cardId}')`);
   if (!card) return;
   const nm = card.querySelector('.nm');
@@ -473,7 +487,10 @@ async function loadUserCards(){
     const data = await resp.json();
     if (!resp.ok) throw new Error(data.error || 'Erro ao carregar cards');
     applyEmptyTemplateView();
-    (data.cards || []).forEach(c=>applyCardToUI(c.card_id, c.title, c.description));
+    (data.cards || []).forEach(c=>{
+      userCards[c.card_id] = { title: c.title, description: c.description, activityLink: c.activity_link || '' };
+      applyCardToUI(c.card_id, c.title, c.description);
+    });
     setAuthStatus(`Logado: ${currentUser.email} · ${data.cards?.length || 0} aulas personalizadas`);
   } catch (e) {
     setAuthStatus(`Logado: ${currentUser.email} (falha ao carregar cards: ${e.message})`);
@@ -488,14 +505,16 @@ async function editCard(id){
   if (!title) return;
   const description = prompt('Descrição da aula:', baseDesc);
   if (!description) return;
+  const activityLink = prompt('Link da atividade (Google Docs/Slides/Drive etc):', userCards[id]?.activityLink || '') || '';
   try {
     const resp = await fetch(`${API_BASE}/api/cards/upsert`, {
       method:'POST',
       headers:{'Content-Type':'application/json'},
-      body: JSON.stringify({ userId: currentUser.id, cardId: id, title, description })
+      body: JSON.stringify({ userId: currentUser.id, cardId: id, title, description, activityLink })
     });
     const data = await resp.json();
     if (!resp.ok) throw new Error(data.error || 'Erro ao salvar');
+    userCards[id] = { title: data.card.title, description: data.card.description, activityLink: data.card.activity_link || '' };
     applyCardToUI(id, data.card.title, data.card.description);
     setAuthStatus(`Salvo com sucesso: ${id}`);
     o(id);
@@ -504,9 +523,42 @@ async function editCard(id){
   }
 }
 
+function appendChat(role, text){
+  const el = document.createElement('div');
+  el.className = 'chat-msg';
+  el.innerHTML = `<b>${role}:</b> ${text}`;
+  const log = document.getElementById('chat-log');
+  log.appendChild(el);
+  log.scrollTop = log.scrollHeight;
+}
+
+async function sendChat(){
+  const input = document.getElementById('chat-text');
+  const text = input.value.trim();
+  if (!text) return;
+  input.value = '';
+  appendChat('Você', text);
+  try {
+    const resp = await fetch(`${API_BASE}/api/chat`, {
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({ message: text, userId: currentUser?.id || null })
+    });
+    const data = await resp.json();
+    if (!resp.ok) throw new Error(data.error || 'Erro no chat');
+    appendChat('Assistente', data.answer || 'Sem resposta.');
+  } catch (e) {
+    appendChat('Assistente', `Falha: ${e.message}`);
+  }
+}
+
 document.getElementById('btn-login').addEventListener('click', login);
 document.getElementById('btn-signup').addEventListener('click', signup);
 document.getElementById('btn-logout').addEventListener('click', logout);
+document.getElementById('chat-fab').addEventListener('click', ()=>document.getElementById('chat-box').classList.toggle('open'));
+document.getElementById('chat-close').addEventListener('click', ()=>document.getElementById('chat-box').classList.remove('open'));
+document.getElementById('chat-send').addEventListener('click', sendChat);
+document.getElementById('chat-text').addEventListener('keydown', (e)=>{ if (e.key === 'Enter') sendChat(); });
 
 applyEmptyTemplateView();
 initAuth();

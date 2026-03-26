@@ -17,7 +17,8 @@ app.get('/', (_req, res) => {
       'POST /api/activities',
       'POST /api/classify',
       'GET /api/cards/:userId',
-      'POST /api/cards/upsert'
+      'POST /api/cards/upsert',
+      'POST /api/chat'
     ]
   });
 });
@@ -104,10 +105,18 @@ app.get('/api/cards/:userId', async (req, res) => {
     const sb = requireSupabase();
     const { data, error } = await sb
       .from('user_card_content')
-      .select('card_id,title,description,updated_at')
+      .select('card_id,title,description,activity_link,updated_at')
       .eq('user_id', userId);
 
-    if (error) return res.status(500).json({ error: error.message });
+    if (error) {
+      if ((error.message || '').includes('user_card_content')) {
+        return res.json({
+          cards: [],
+          warning: 'Tabela user_card_content não encontrada. Rode o SQL atualizado em supabase/schema.sql.'
+        });
+      }
+      return res.status(500).json({ error: error.message });
+    }
     return res.json({ cards: data || [] });
   } catch (error) {
     console.error(error);
@@ -117,7 +126,7 @@ app.get('/api/cards/:userId', async (req, res) => {
 
 app.post('/api/cards/upsert', async (req, res) => {
   try {
-    const { userId, cardId, title, description } = req.body || {};
+    const { userId, cardId, title, description, activityLink = '' } = req.body || {};
     if (!userId || !cardId || !title || !description) {
       return res.status(400).json({ error: 'userId, cardId, title e description são obrigatórios.' });
     }
@@ -130,18 +139,43 @@ app.post('/api/cards/upsert', async (req, res) => {
           card_id: cardId,
           title,
           description,
+          activity_link: activityLink || null,
           updated_at: new Date().toISOString()
         },
         { onConflict: 'user_id,card_id' }
       )
-      .select('card_id,title,description,updated_at')
+      .select('card_id,title,description,activity_link,updated_at')
       .single();
 
-    if (error) return res.status(500).json({ error: error.message });
+    if (error) {
+      if ((error.message || '').includes('user_card_content')) {
+        return res.status(500).json({ error: 'Tabela user_card_content não encontrada. Rode o SQL atualizado em supabase/schema.sql.' });
+      }
+      return res.status(500).json({ error: error.message });
+    }
     return res.json({ card: data });
   } catch (error) {
     console.error(error);
     return res.status(500).json({ error: error.message || 'Erro ao salvar card.' });
+  }
+});
+
+app.post('/api/chat', async (req, res) => {
+  try {
+    const { message } = req.body || {};
+    if (!message) return res.status(400).json({ error: 'message é obrigatório.' });
+    if (!gemini) {
+      return res.json({
+        answer: 'Chat ativo em modo básico. Configure GEMINI_API_KEY para respostas inteligentes.'
+      });
+    }
+    const result = await classifyActivity({ fileName: 'chat.txt', extractedText: message });
+    return res.json({
+      answer: `Entendi sua solicitação. Sugestão inicial: ${result.theme} (aula ${result.lesson_number}, ${result.module}).`
+    });
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({ error: error.message || 'Erro no chat.' });
   }
 });
 

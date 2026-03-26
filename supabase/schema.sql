@@ -82,9 +82,13 @@ create table if not exists public.user_card_content (
   card_id text not null,
   title text not null,
   description text not null,
+  activity_link text,
   updated_at timestamptz not null default now(),
   unique(user_id, card_id)
 );
+
+alter table public.user_card_content
+add column if not exists activity_link text;
 
 create or replace function public.set_updated_at()
 returns trigger

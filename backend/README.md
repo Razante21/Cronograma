@@ -12,6 +12,7 @@ API mínima para:
 - `POST /api/classify`
 - `GET /api/cards/:userId`
 - `POST /api/cards/upsert`
+- `POST /api/chat`
 
 ## Rodando
 
