@@ -24,6 +24,18 @@ cp .env.example .env
 - `NEXT_PUBLIC_SUPABASE_ANON_KEY`
 - `GEMINI_API_KEY`
 
+### Configuração do `index.html` (sem build)
+
+Para testar login direto no HTML estático, copie:
+
+```bash
+cp app_config.example.js app_config.js
+```
+
+E preencha no `app_config.js`:
+- `SUPABASE_URL`
+- `SUPABASE_ANON_KEY`
+
 ## 3) Banco (Supabase)
 
 No SQL Editor do Supabase, rode:

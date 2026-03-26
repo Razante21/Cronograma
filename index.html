@@ -98,6 +98,11 @@
   /* Botão de preview nos arquivos */
 
   .arq-dl:hover{background:#DCEEFF}
+  .auth-bar{max-width:920px;margin:0 auto 14px;display:flex;gap:8px;flex-wrap:wrap;align-items:center;justify-content:center}
+  .auth-bar input{padding:8px 10px;border:1px solid var(--border);border-radius:7px;background:#fff;font-size:12px;min-width:190px}
+  .auth-bar button{padding:8px 11px;border:1px solid #C8DCF7;background:#F0F7FF;color:#1A3C8F;border-radius:7px;font-size:12px;cursor:pointer}
+  .auth-bar button:hover{background:#DCEEFF}
+  .auth-status{font-size:11px;color:var(--sub)}
 </style>
 </head>
 <body>
@@ -106,6 +111,15 @@
   <h1>Cronograma de Aulas</h1>
   <div class="hs">23/02 → 04/05 · Segundas e Quartas · 20/04 feriado (emenda Tiradentes) · clique em qualquer aula para ver o plano</div>
 </header>
+
+<div class="auth-bar">
+  <input id="auth-email" type="email" placeholder="Seu e-mail">
+  <input id="auth-pass" type="password" placeholder="Sua senha">
+  <button id="btn-login" type="button">Entrar</button>
+  <button id="btn-signup" type="button">Cadastrar</button>
+  <button id="btn-logout" type="button">Sair</button>
+  <span id="auth-status" class="auth-status">Template vazio ativo (faça login para sincronizar)</span>
+</div>
 
 <div class="grid">
 
@@ -192,7 +206,16 @@
   </div>
 </div>
 
+<script src="app_config.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
+window.APP_CONFIG = window.APP_CONFIG || {};
+const SUPABASE_URL = window.APP_CONFIG.SUPABASE_URL || '';
+const SUPABASE_ANON_KEY = window.APP_CONFIG.SUPABASE_ANON_KEY || '';
+const EMPTY_TEMPLATE_BY_DEFAULT = true;
+let sb = null;
+let currentUser = null;
+
 const D = {
   'i1':{m:'Aula 1 · 23/02 Seg',t:'Entender o que sabem + Formatação Simples',done:true,
     tp:['Conversa inicial — entender o nível de cada aluno','Negrito (Ctrl+N), Itálico (Ctrl+I), Sublinhado (Ctrl+S)','Mudar fonte, tamanho e cor do texto','Alinhamentos: esquerda, centro, direita e justificado'],
@@ -319,6 +342,18 @@ const D = {
 };
 
 function o(id){
+  if (!currentUser) {
+    const a = D[id]; if(!a) return;
+    document.getElementById('mm').textContent = a.m;
+    document.getElementById('mt').textContent = `Aula em branco (${a.t})`;
+    document.getElementById('mb').innerHTML = `
+      <div class="ms"><div class="done-box">📋 Template vazio ativo</div></div>
+      <div class="ms"><div class="obs">Faça login para carregar seu cronograma pessoal e atividades vinculadas.</div></div>
+    `;
+    document.getElementById('ov').classList.add('open');
+    document.body.style.overflow='hidden';
+    return;
+  }
   const a=D[id]; if(!a) return;
   document.getElementById('mm').textContent=a.m;
   document.getElementById('mt').textContent=a.t;
@@ -348,6 +383,72 @@ function c(){document.getElementById('ov').classList.remove('open');document.bod
 function hov(e){if(e.target===document.getElementById('ov'))c();}
 
 document.addEventListener('keydown',e=>{if(e.key==='Escape')c();});
+
+function applyEmptyTemplateView(){
+  if (!EMPTY_TEMPLATE_BY_DEFAULT) return;
+  document.querySelectorAll('.ac').forEach((card)=>{
+    card.classList.remove('done');
+    const nm = card.querySelector('.nm');
+    const desc = card.querySelector('.desc');
+    const an = card.querySelector('.an');
+    const hint = card.querySelector('.hint');
+    if (nm && an) nm.textContent = `${an.textContent} — sem conteúdo`;
+    if (desc) desc.textContent = 'Conteúdo ainda não definido para esta aula.';
+    if (hint) hint.textContent = '↗ configurar plano';
+  });
+  const pills = document.querySelectorAll('.pill');
+  if (pills[0]) pills[0].innerHTML = 'Intermediário: <strong>20 aulas</strong> · 0 dadas · 20 restantes';
+  if (pills[1]) pills[1].innerHTML = 'Avançado: <strong>20 aulas</strong> · 0 dadas · 20 restantes';
+}
+
+function setAuthStatus(msg){
+  document.getElementById('auth-status').textContent = msg;
+}
+
+async function initAuth(){
+  if (!SUPABASE_URL || !SUPABASE_ANON_KEY || !window.supabase?.createClient) {
+    setAuthStatus('Sem Supabase configurado (crie app_config.js com URL/ANON_KEY).');
+    return;
+  }
+  sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+  const { data } = await sb.auth.getSession();
+  currentUser = data?.session?.user || null;
+  setAuthStatus(currentUser ? `Logado: ${currentUser.email}` : 'Template vazio ativo (faça login para sincronizar)');
+}
+
+async function login(){
+  if (!sb) return;
+  const email = document.getElementById('auth-email').value.trim();
+  const password = document.getElementById('auth-pass').value;
+  const { error } = await sb.auth.signInWithPassword({ email, password });
+  if (error) return setAuthStatus(`Erro login: ${error.message}`);
+  const { data } = await sb.auth.getSession();
+  currentUser = data?.session?.user || null;
+  setAuthStatus(`Logado: ${currentUser?.email || ''}`);
+}
+
+async function signup(){
+  if (!sb) return;
+  const email = document.getElementById('auth-email').value.trim();
+  const password = document.getElementById('auth-pass').value;
+  const { error } = await sb.auth.signUp({ email, password });
+  if (error) return setAuthStatus(`Erro cadastro: ${error.message}`);
+  setAuthStatus('Cadastro enviado. Verifique e-mail de confirmação (se habilitado).');
+}
+
+async function logout(){
+  if (!sb) return;
+  await sb.auth.signOut();
+  currentUser = null;
+  setAuthStatus('Logout realizado. Template vazio ativo.');
+}
+
+document.getElementById('btn-login').addEventListener('click', login);
+document.getElementById('btn-signup').addEventListener('click', signup);
+document.getElementById('btn-logout').addEventListener('click', logout);
+
+applyEmptyTemplateView();
+initAuth();
 
 </script>
 </body>
