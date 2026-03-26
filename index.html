@@ -1074,7 +1074,8 @@ function setAuthStatus(msg){
 
 function setAuthBusy(isBusy){
   authBusy = isBusy;
-  ['btn-login','btn-signup','btn-logout'].forEach((id)=>{
+  // Só desabilita os botões de login/cadastro, nunca o de sair
+  ['btn-login','btn-signup'].forEach((id)=>{
     const el = document.getElementById(id);
     if (el) el.disabled = isBusy;
   });
@@ -1183,8 +1184,9 @@ async function signup(){
 }
 
 async function logout(){
-  if (!sb || authBusy) return;
-  setAuthBusy(true);
+  if (!sb) return;
+  const btn = document.getElementById('btn-logout');
+  if (btn) btn.disabled = true;
   try {
     await sb.auth.signOut();
     currentUser = null;
@@ -1194,11 +1196,11 @@ async function logout(){
     document.querySelectorAll('.grid > div')[1].style.display = '';
     document.getElementById('btn-add-module').style.display = 'none';
     document.getElementById('btn-config').style.display = 'none';
-    setAuthStatus('Logout realizado. Template vazio ativo.');
     syncAuthButtons();
     document.getElementById('chat-log').innerHTML = '';
   } finally {
-    setAuthBusy(false);
+    const btn = document.getElementById('btn-logout');
+    if (btn) btn.disabled = false;
   }
 }
 
@@ -1371,11 +1373,16 @@ async function sendChat(){
           else if (s.field === 'activity_link') userCards[s.card_id].activityLink = s.suggested_value;
           else if (s.field === 'tags') userCards[s.card_id].tags = s.suggested_value;
           applyCardToUI(s.card_id, userCards[s.card_id].title || '', userCards[s.card_id].description || '');
-          // Aprovar no banco em background
-          fetch(`${API_BASE}/api/ai-suggestions/${s.id}`, {
-            method:'PATCH',headers:{'Content-Type':'application/json'},
-            body:JSON.stringify({userId:currentUser.id,action:'approve'})
-          }).catch(()=>{});
+          // Salvar card no banco via sb (sem depender do backend)
+          if (sb && currentUser) {
+            const uc = userCards[s.card_id];
+            sb.from('user_card_content').upsert({
+              user_id: currentUser.id, card_id: s.card_id,
+              title: uc.title || s.card_id, description: uc.description || '',
+              activity_link: uc.activityLink || null, tags: uc.tags || null,
+              updated_at: new Date().toISOString()
+            }, { onConflict: 'user_id,card_id' }).then().catch(console.error);
+          }
         }
         showToast(`✓ IA aplicou ${data.suggestions.length} mudança(s)`, 'ok');
       } else {
