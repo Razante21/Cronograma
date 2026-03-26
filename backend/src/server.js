@@ -18,7 +18,9 @@ app.get('/', (_req, res) => {
       'POST /api/classify',
       'GET /api/cards/:userId',
       'POST /api/cards/upsert',
-      'POST /api/chat'
+      'POST /api/chat',
+      'GET /api/preferences/:userId',
+      'POST /api/preferences/upsert'
     ]
   });
 });
@@ -162,8 +164,11 @@ app.post('/api/cards/upsert', async (req, res) => {
 
 app.post('/api/chat', async (req, res) => {
   try {
-    const { message } = req.body || {};
+    const { message, allowAiEdits = true } = req.body || {};
     if (!message) return res.status(400).json({ error: 'message é obrigatório.' });
+    if (!allowAiEdits) {
+      return res.json({ answer: 'IA sem permissão para alterar conteúdo. Ative a permissão no painel para usar automações.' });
+    }
     if (!gemini) {
       return res.json({
         answer: 'Chat ativo em modo básico. Configure GEMINI_API_KEY para respostas inteligentes.'
@@ -176,6 +181,51 @@ app.post('/api/chat', async (req, res) => {
   } catch (error) {
     console.error(error);
     return res.status(500).json({ error: error.message || 'Erro no chat.' });
+  }
+});
+
+app.get('/api/preferences/:userId', async (req, res) => {
+  try {
+    const sb = requireSupabase();
+    const { userId } = req.params;
+    const { data, error } = await sb
+      .from('user_preferences')
+      .select('turma_count,cycle_type,module_count,allow_ai_edits')
+      .eq('user_id', userId)
+      .maybeSingle();
+    if (error) return res.status(500).json({ error: error.message });
+    return res.json({ preferences: data || null });
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({ error: error.message || 'Erro ao buscar preferências.' });
+  }
+});
+
+app.post('/api/preferences/upsert', async (req, res) => {
+  try {
+    const { userId, turmaCount = 1, cycleType = 'mod12', moduleCount = 1, allowAiEdits = false } = req.body || {};
+    if (!userId) return res.status(400).json({ error: 'userId é obrigatório.' });
+    const sb = requireSupabase();
+    const { data, error } = await sb
+      .from('user_preferences')
+      .upsert(
+        {
+          user_id: userId,
+          turma_count: Number(turmaCount) || 1,
+          cycle_type: cycleType,
+          module_count: Number(moduleCount) || 1,
+          allow_ai_edits: Boolean(allowAiEdits),
+          updated_at: new Date().toISOString()
+        },
+        { onConflict: 'user_id' }
+      )
+      .select('turma_count,cycle_type,module_count,allow_ai_edits')
+      .single();
+    if (error) return res.status(500).json({ error: error.message });
+    return res.json({ preferences: data });
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({ error: error.message || 'Erro ao salvar preferências.' });
   }
 });
 

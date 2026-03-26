@@ -38,6 +38,7 @@ E preencha no `app_config.js`:
 - `API_BASE` (ex.: `http://localhost:8787`)
 
 Obs.: a conta `pcdsantos007@gmail.com` mantém visualização do template principal original ao logar.
+Ao primeiro login de outras contas, o sistema pergunta quantidade de turmas e tipo de ciclo (`legacy` ou `mod12`) e salva isso por usuário.
 
 ## 3) Banco (Supabase)
 

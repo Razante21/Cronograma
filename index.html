@@ -128,6 +128,10 @@
   <button id="btn-login" type="button">Entrar</button>
   <button id="btn-signup" type="button">Cadastrar</button>
   <button id="btn-logout" type="button">Sair</button>
+  <button id="btn-add-module" type="button" style="display:none">+ Adicionar módulo</button>
+  <label class="auth-status" style="display:inline-flex;gap:6px;align-items:center">
+    <input type="checkbox" id="allow-ai-edits"> Permitir IA alterar
+  </label>
   <span id="auth-status" class="auth-status">Template vazio ativo (faça login para sincronizar)</span>
 </div>
 
@@ -238,6 +242,7 @@ const MAIN_TEMPLATE_EMAIL = 'pcdsantos007@gmail.com';
 let sb = null;
 let currentUser = null;
 const userCards = {};
+let userPreferences = null;
 const originalCards = [];
 const originalPills = [];
 
@@ -453,6 +458,57 @@ function restoreOriginalTemplateView(){
   originalPills.forEach((p)=>{ p.ref.innerHTML = p.html; });
 }
 
+function applyPreferencesLayout(){
+  const cols = document.querySelectorAll('.grid > div');
+  if (cols.length < 2 || !userPreferences) return;
+  const leftTitle = cols[0].querySelector('.ct');
+  const rightTitle = cols[1].querySelector('.ct');
+  const addBtn = document.getElementById('btn-add-module');
+
+  if (userPreferences.cycle_type === 'mod12') {
+    if (leftTitle) leftTitle.textContent = 'Módulo 1';
+    if (rightTitle) rightTitle.textContent = 'Módulo 2';
+    cols[1].style.display = userPreferences.module_count > 1 ? '' : 'none';
+    addBtn.style.display = userPreferences.module_count > 1 ? 'none' : '';
+  } else {
+    cols[1].style.display = '';
+    addBtn.style.display = 'none';
+    if (leftTitle) leftTitle.textContent = 'Turma Intermediária — Módulo II';
+    if (rightTitle) rightTitle.textContent = 'Turma Avançada — Módulo III';
+  }
+  document.getElementById('allow-ai-edits').checked = !!userPreferences.allow_ai_edits;
+}
+
+async function savePreferences(prefs){
+  if (!currentUser) return;
+  const resp = await fetch(`${API_BASE}/api/preferences/upsert`, {
+    method:'POST',
+    headers:{'Content-Type':'application/json'},
+    body: JSON.stringify({ userId: currentUser.id, ...prefs })
+  });
+  const data = await resp.json();
+  if (!resp.ok) throw new Error(data.error || 'Erro ao salvar preferências');
+  userPreferences = data.preferences;
+  applyPreferencesLayout();
+}
+
+async function ensurePreferences(){
+  if (!currentUser) return;
+  const resp = await fetch(`${API_BASE}/api/preferences/${currentUser.id}`);
+  const data = await resp.json();
+  if (!resp.ok) throw new Error(data.error || 'Erro ao carregar preferências');
+  if (data.preferences) {
+    userPreferences = data.preferences;
+    applyPreferencesLayout();
+    return;
+  }
+  const turmaCount = Number(prompt('Quantas turmas você tem?', '1') || '1');
+  const cycleRaw = prompt('Seu ciclo é: "legacy" (Básico/Intermediário/Avançado) ou "mod12" (Módulo 1/2)?', 'mod12') || 'mod12';
+  const cycleType = cycleRaw.toLowerCase().includes('legacy') ? 'legacy' : 'mod12';
+  const moduleCount = cycleType === 'mod12' ? 1 : 2;
+  await savePreferences({ turmaCount, cycleType, moduleCount, allowAiEdits: false });
+}
+
 function setAuthStatus(msg){
   document.getElementById('auth-status').textContent = msg;
 }
@@ -472,10 +528,12 @@ async function initAuth(){
   }
   if ((currentUser.email || '').toLowerCase() === MAIN_TEMPLATE_EMAIL) {
     restoreOriginalTemplateView();
+    document.getElementById('btn-add-module').style.display = 'none';
     setAuthStatus(`Logado: ${currentUser.email} · template principal ativo`);
     return;
   }
   applyEmptyTemplateView();
+  await ensurePreferences();
   setAuthStatus(`Logado: ${currentUser.email}`);
   await loadUserCards(true);
 }
@@ -491,10 +549,12 @@ async function login(){
   const isMain = (currentUser?.email || '').toLowerCase() === MAIN_TEMPLATE_EMAIL;
   if (isMain) {
     restoreOriginalTemplateView();
+    document.getElementById('btn-add-module').style.display = 'none';
     setAuthStatus(`Logado: ${currentUser?.email || ''} · template principal ativo`);
     return;
   }
   applyEmptyTemplateView();
+  await ensurePreferences();
   setAuthStatus(`Logado: ${currentUser?.email || ''}`);
   await loadUserCards(true);
 }
@@ -512,8 +572,11 @@ async function logout(){
   if (!sb) return;
   await sb.auth.signOut();
   currentUser = null;
+  userPreferences = null;
   Object.keys(userCards).forEach(k=>delete userCards[k]);
   applyEmptyTemplateView();
+  document.querySelectorAll('.grid > div')[1].style.display = '';
+  document.getElementById('btn-add-module').style.display = 'none';
   setAuthStatus('Logout realizado. Template vazio ativo.');
 }
 
@@ -587,10 +650,11 @@ async function sendChat(){
   input.value = '';
   appendChat('Você', text);
   try {
+    const allowAiEdits = document.getElementById('allow-ai-edits').checked;
     const resp = await fetch(`${API_BASE}/api/chat`, {
       method:'POST',
       headers:{'Content-Type':'application/json'},
-      body: JSON.stringify({ message: text, userId: currentUser?.id || null })
+      body: JSON.stringify({ message: text, userId: currentUser?.id || null, allowAiEdits })
     });
     const data = await resp.json();
     if (!resp.ok) throw new Error(data.error || 'Erro no chat');
@@ -607,6 +671,26 @@ document.getElementById('chat-fab').addEventListener('click', ()=>document.getEl
 document.getElementById('chat-close').addEventListener('click', ()=>document.getElementById('chat-box').classList.remove('open'));
 document.getElementById('chat-send').addEventListener('click', sendChat);
 document.getElementById('chat-text').addEventListener('keydown', (e)=>{ if (e.key === 'Enter') sendChat(); });
+document.getElementById('btn-add-module').addEventListener('click', async ()=>{
+  if (!currentUser || !userPreferences) return;
+  userPreferences.module_count = 2;
+  await savePreferences({
+    turmaCount: userPreferences.turma_count,
+    cycleType: userPreferences.cycle_type,
+    moduleCount: userPreferences.module_count,
+    allowAiEdits: userPreferences.allow_ai_edits
+  });
+});
+document.getElementById('allow-ai-edits').addEventListener('change', async (e)=>{
+  if (!currentUser || !userPreferences) return;
+  userPreferences.allow_ai_edits = e.target.checked;
+  await savePreferences({
+    turmaCount: userPreferences.turma_count,
+    cycleType: userPreferences.cycle_type,
+    moduleCount: userPreferences.module_count,
+    allowAiEdits: userPreferences.allow_ai_edits
+  });
+});
 
 captureOriginalTemplateView();
 applyEmptyTemplateView();

@@ -90,6 +90,16 @@ create table if not exists public.user_card_content (
 alter table public.user_card_content
 add column if not exists activity_link text;
 
+create table if not exists public.user_preferences (
+  id uuid primary key default gen_random_uuid(),
+  user_id uuid not null unique references auth.users(id) on delete cascade,
+  turma_count int not null default 1,
+  cycle_type text not null default 'mod12', -- legacy | mod12
+  module_count int not null default 1,
+  allow_ai_edits boolean not null default false,
+  updated_at timestamptz not null default now()
+);
+
 create or replace function public.set_updated_at()
 returns trigger
 language plpgsql
@@ -118,6 +128,7 @@ alter table public.activity_links enable row level security;
 alter table public.chat_messages enable row level security;
 alter table public.schedule_templates enable row level security;
 alter table public.user_card_content enable row level security;
+alter table public.user_preferences enable row level security;
 
 create policy "profiles_select_own" on public.profiles
 for select using (auth.uid() = id);
@@ -213,4 +224,7 @@ create policy "chat_all_own" on public.chat_messages
 for all using (auth.uid() = user_id) with check (auth.uid() = user_id);
 
 create policy "user_card_content_all_own" on public.user_card_content
+for all using (auth.uid() = user_id) with check (auth.uid() = user_id);
+
+create policy "user_preferences_all_own" on public.user_preferences
 for all using (auth.uid() = user_id) with check (auth.uid() = user_id);
