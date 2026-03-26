@@ -107,12 +107,13 @@
   .auth-bar button:disabled{opacity:.45;cursor:not-allowed}
   .auth-status{font-size:11px;color:var(--sub)}
   .chat-fab{position:fixed;right:20px;bottom:20px;background:#1A3C8F;color:#fff;border:none;border-radius:999px;padding:12px 14px;cursor:pointer;z-index:220}
-  .chat-box{position:fixed;right:20px;bottom:72px;width:320px;max-height:420px;background:var(--card);border:1px solid var(--border);border-radius:12px;box-shadow:0 12px 32px rgba(0,0,0,.2);display:none;flex-direction:column;z-index:220}
+  .chat-box{position:fixed;right:20px;bottom:72px;width:360px;max-height:520px;background:var(--card);border:1px solid var(--border);border-radius:14px;box-shadow:0 12px 32px rgba(0,0,0,.2);display:none;flex-direction:column;z-index:220}
   .chat-box.open{display:flex}
   .chat-head{padding:10px 12px;border-bottom:1px solid var(--border);font-size:12px;font-weight:600;display:flex;justify-content:space-between;align-items:center}
-  .chat-log{padding:10px;overflow:auto;flex:1;font-size:12px}
-  .chat-msg{margin-bottom:8px;line-height:1.45}
-  .chat-msg b{color:#1A3C8F}
+  .chat-log{padding:10px;overflow:auto;flex:1;font-size:12px;display:flex;flex-direction:column;gap:8px}
+  .chat-msg{line-height:1.45;max-width:86%;padding:8px 10px;border-radius:10px}
+  .chat-msg.user{align-self:flex-end;background:#EAF2FF;border:1px solid #C8DCF7}
+  .chat-msg.assistant{align-self:flex-start;background:#F4F3EF;border:1px solid var(--border)}
   .chat-input{display:flex;gap:6px;padding:10px;border-top:1px solid var(--border)}
   .chat-input input{flex:1;padding:8px 10px;border:1px solid var(--border);border-radius:8px;font-size:12px}
   .chat-input button{padding:8px 10px;border:1px solid #C8DCF7;background:#F0F7FF;border-radius:8px;font-size:12px;cursor:pointer}
@@ -128,6 +129,7 @@
   .onb-row input,.onb-row select{padding:8px 10px;border:1px solid var(--border);border-radius:8px;font-size:12px;min-width:180px}
   .onb-turmas{display:grid;grid-template-columns:1fr 1fr;gap:8px}
   .onb-foot{display:flex;justify-content:flex-end;gap:8px;margin-top:12px}
+  .onb-msg{font-size:12px;color:#8C1A1A;margin-top:8px;min-height:18px}
   .tips-panel{position:fixed;left:18px;bottom:18px;background:var(--card);border:1px solid var(--border);border-radius:10px;padding:10px 12px;font-size:11px;max-width:260px;z-index:210}
   .edit-ov{position:fixed;inset:0;background:rgba(0,0,0,.55);display:none;align-items:center;justify-content:center;z-index:280;padding:18px}
   .edit-ov.open{display:flex}
@@ -156,6 +158,7 @@
     <label class="auth-status" style="display:inline-flex;gap:6px;align-items:center">
       <input type="checkbox" id="allow-ai-edits"> Permitir IA alterar
     </label>
+    <span id="auth-user" class="auth-status" style="display:none"></span>
     <span id="auth-status" class="auth-status">Template vazio ativo (faça login para sincronizar)</span>
   </div>
 </nav>
@@ -278,6 +281,7 @@
       <button class="arq" type="button" id="onb-next">Próximo</button>
       <button class="arq" type="button" id="onb-save" style="display:none">Salvar configuração</button>
     </div>
+    <div class="onb-msg" id="onb-msg"></div>
   </div>
 </div>
 
@@ -604,12 +608,14 @@ function openOnboarding(prefill = null){
   document.getElementById('onb-module-count').value = p.module_count || 1;
   document.getElementById('onb-start-date').value = p.start_date || '';
   renderTurmaFields(p.turma_count || 1, p.turmas_json || []);
+  document.getElementById('onb-msg').textContent = '';
   document.getElementById('onb').classList.add('open');
   setOnbStep(1);
 }
 
 function closeOnboarding(){
   document.getElementById('onb').classList.remove('open');
+  document.getElementById('onb-msg').textContent = '';
 }
 
 async function savePreferences(prefs){
@@ -652,9 +658,14 @@ function setAuthBusy(isBusy){
 
 function syncAuthButtons(){
   const logged = !!currentUser;
+  document.getElementById('auth-email').style.display = logged ? 'none' : '';
+  document.getElementById('auth-pass').style.display = logged ? 'none' : '';
   document.getElementById('btn-login').style.display = logged ? 'none' : '';
   document.getElementById('btn-signup').style.display = logged ? 'none' : '';
   document.getElementById('btn-logout').style.display = logged ? '' : 'none';
+  const userEl = document.getElementById('auth-user');
+  userEl.style.display = logged ? '' : 'none';
+  userEl.textContent = logged ? `Conta: ${currentUser.email}` : '';
   if (!logged) document.getElementById('btn-config').style.display = 'none';
 }
 
@@ -824,8 +835,9 @@ async function saveEditCard(){
 
 function appendChat(role, text){
   const el = document.createElement('div');
-  el.className = 'chat-msg';
-  el.innerHTML = `<b>${role}:</b> ${text}`;
+  const cls = role === 'Você' ? 'user' : 'assistant';
+  el.className = `chat-msg ${cls}`;
+  el.textContent = text;
   const log = document.getElementById('chat-log');
   log.appendChild(el);
   log.scrollTop = log.scrollHeight;
@@ -903,20 +915,25 @@ document.getElementById('onb-prev').addEventListener('click', ()=>setOnbStep(onb
 document.getElementById('onb-next').addEventListener('click', ()=>setOnbStep(onbStep+1));
 document.getElementById('onb-save').addEventListener('click', async ()=>{
   if (!currentUser) return;
-  const cycleType = document.getElementById('onb-cycle').value;
-  const turmaCount = Number(document.getElementById('onb-turma-count').value || '1');
-  const moduleCount = Math.min(2, Math.max(1, Number(document.getElementById('onb-module-count').value || '1')));
-  const startDate = document.getElementById('onb-start-date').value || null;
-  const turmas = [...document.querySelectorAll('#onb-turmas input')].map(i=>i.value.trim()).filter(Boolean);
-  await savePreferences({
-    turmaCount,
-    cycleType,
-    moduleCount: cycleType === 'mod12' ? moduleCount : 2,
-    startDate,
-    turmas,
-    allowAiEdits: document.getElementById('allow-ai-edits').checked
-  });
-  closeOnboarding();
+  try {
+    const cycleType = document.getElementById('onb-cycle').value;
+    const turmaCount = Number(document.getElementById('onb-turma-count').value || '1');
+    const moduleCount = Math.min(2, Math.max(1, Number(document.getElementById('onb-module-count').value || '1')));
+    const startDate = document.getElementById('onb-start-date').value || null;
+    const turmas = [...document.querySelectorAll('#onb-turmas input')].map(i=>i.value.trim()).filter(Boolean);
+    if (!turmaCount || turmaCount < 1) throw new Error('Quantidade de turmas inválida.');
+    await savePreferences({
+      turmaCount,
+      cycleType,
+      moduleCount: cycleType === 'mod12' ? moduleCount : 2,
+      startDate,
+      turmas,
+      allowAiEdits: document.getElementById('allow-ai-edits').checked
+    });
+    closeOnboarding();
+  } catch (e) {
+    document.getElementById('onb-msg').textContent = e.message || 'Falha ao salvar configuração.';
+  }
 });
 document.getElementById('btn-add-module').addEventListener('click', async ()=>{
   if (!currentUser || !userPreferences) return;
