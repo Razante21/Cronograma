@@ -39,6 +39,7 @@ E preencha no `app_config.js`:
 
 Obs.: a conta `pcdsantos007@gmail.com` mantém visualização do template principal original ao logar.
 Ao primeiro login de outras contas, o sistema pergunta quantidade de turmas e tipo de ciclo (`legacy` ou `mod12`) e salva isso por usuário.
+Há uma tela de configuração (navbar botão `⚙ Configurar`) para editar ciclo, quantidade de turmas, data de início e nomes das turmas.
 
 ## 3) Banco (Supabase)
 

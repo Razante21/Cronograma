@@ -96,9 +96,14 @@ create table if not exists public.user_preferences (
   turma_count int not null default 1,
   cycle_type text not null default 'mod12', -- legacy | mod12
   module_count int not null default 1,
+  start_date date,
+  turmas_json jsonb not null default '[]'::jsonb,
   allow_ai_edits boolean not null default false,
   updated_at timestamptz not null default now()
 );
+
+alter table public.user_preferences add column if not exists start_date date;
+alter table public.user_preferences add column if not exists turmas_json jsonb not null default '[]'::jsonb;
 
 create or replace function public.set_updated_at()
 returns trigger

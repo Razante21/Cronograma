@@ -116,6 +116,13 @@
   .chat-input{display:flex;gap:6px;padding:10px;border-top:1px solid var(--border)}
   .chat-input input{flex:1;padding:8px 10px;border:1px solid var(--border);border-radius:8px;font-size:12px}
   .chat-input button{padding:8px 10px;border:1px solid #C8DCF7;background:#F0F7FF;border-radius:8px;font-size:12px;cursor:pointer}
+  .onb{position:fixed;inset:0;background:rgba(0,0,0,.55);display:none;align-items:center;justify-content:center;z-index:260;padding:18px}
+  .onb.open{display:flex}
+  .onb-card{width:100%;max-width:680px;background:var(--card);border:1px solid var(--border);border-radius:14px;padding:16px}
+  .onb-row{display:flex;gap:10px;margin-bottom:10px;flex-wrap:wrap}
+  .onb-row input,.onb-row select{padding:8px 10px;border:1px solid var(--border);border-radius:8px;font-size:12px;min-width:180px}
+  .onb-turmas{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+  .onb-foot{display:flex;justify-content:flex-end;gap:8px;margin-top:12px}
 </style>
 </head>
 <body>
@@ -133,6 +140,7 @@
     <button id="btn-login" type="button">Entrar</button>
     <button id="btn-signup" type="button">Cadastrar</button>
     <button id="btn-logout" type="button">Sair</button>
+    <button id="btn-config" type="button" style="display:none">⚙ Configurar</button>
     <button id="btn-add-module" type="button" style="display:none">+ Adicionar módulo</button>
     <label class="auth-status" style="display:inline-flex;gap:6px;align-items:center">
       <input type="checkbox" id="allow-ai-edits"> Permitir IA alterar
@@ -223,6 +231,28 @@
       <button class="mc" onclick="c()">✕</button>
     </div>
     <div class="mb" id="mb"></div>
+  </div>
+</div>
+
+<div class="onb" id="onb">
+  <div class="onb-card">
+    <h3 style="margin-bottom:10px">Configuração inicial do cronograma</h3>
+    <div class="onb-row">
+      <select id="onb-cycle">
+        <option value="mod12">Ciclo novo (Módulo 1 e 2)</option>
+        <option value="legacy">Ciclo passado (Básico / Intermediário / Avançado)</option>
+      </select>
+      <input id="onb-turma-count" type="number" min="1" max="10" placeholder="Quantidade de turmas">
+      <input id="onb-start-date" type="date">
+    </div>
+    <div class="onb-row">
+      <input id="onb-module-count" type="number" min="1" max="2" placeholder="Quantidade de módulos (1 ou 2)">
+    </div>
+    <div id="onb-turmas" class="onb-turmas"></div>
+    <div class="onb-foot">
+      <button class="arq" type="button" id="onb-cancel">Cancelar</button>
+      <button class="arq" type="button" id="onb-save">Salvar configuração</button>
+    </div>
   </div>
 </div>
 
@@ -484,6 +514,35 @@ function applyPreferencesLayout(){
     if (rightTitle) rightTitle.textContent = 'Turma Avançada — Módulo III';
   }
   document.getElementById('allow-ai-edits').checked = !!userPreferences.allow_ai_edits;
+  document.getElementById('btn-config').style.display = '';
+}
+
+function renderTurmaFields(count, values = []){
+  const wrap = document.getElementById('onb-turmas');
+  wrap.innerHTML = '';
+  const total = Math.max(1, Number(count) || 1);
+  for (let i=0;i<total;i++){
+    const input = document.createElement('input');
+    input.type = 'text';
+    input.placeholder = `Nome da turma ${i+1}`;
+    input.value = values[i] || '';
+    input.dataset.idx = String(i);
+    wrap.appendChild(input);
+  }
+}
+
+function openOnboarding(prefill = null){
+  const p = prefill || { cycle_type:'mod12', turma_count:1, module_count:1, start_date:'', turmas_json:[] };
+  document.getElementById('onb-cycle').value = p.cycle_type || 'mod12';
+  document.getElementById('onb-turma-count').value = p.turma_count || 1;
+  document.getElementById('onb-module-count').value = p.module_count || 1;
+  document.getElementById('onb-start-date').value = p.start_date || '';
+  renderTurmaFields(p.turma_count || 1, p.turmas_json || []);
+  document.getElementById('onb').classList.add('open');
+}
+
+function closeOnboarding(){
+  document.getElementById('onb').classList.remove('open');
 }
 
 async function savePreferences(prefs){
@@ -509,11 +568,7 @@ async function ensurePreferences(){
     applyPreferencesLayout();
     return;
   }
-  const turmaCount = Number(prompt('Quantas turmas você tem?', '1') || '1');
-  const cycleRaw = prompt('Seu ciclo é: "legacy" (Básico/Intermediário/Avançado) ou "mod12" (Módulo 1/2)?', 'mod12') || 'mod12';
-  const cycleType = cycleRaw.toLowerCase().includes('legacy') ? 'legacy' : 'mod12';
-  const moduleCount = cycleType === 'mod12' ? 1 : 2;
-  await savePreferences({ turmaCount, cycleType, moduleCount, allowAiEdits: false });
+  openOnboarding();
 }
 
 function setAuthStatus(msg){
@@ -533,6 +588,7 @@ function syncAuthButtons(){
   document.getElementById('btn-login').style.display = logged ? 'none' : '';
   document.getElementById('btn-signup').style.display = logged ? 'none' : '';
   document.getElementById('btn-logout').style.display = logged ? '' : 'none';
+  if (!logged) document.getElementById('btn-config').style.display = 'none';
 }
 
 async function initAuth(){
@@ -609,6 +665,7 @@ async function logout(){
     applyEmptyTemplateView();
     document.querySelectorAll('.grid > div')[1].style.display = '';
     document.getElementById('btn-add-module').style.display = 'none';
+    document.getElementById('btn-config').style.display = 'none';
     setAuthStatus('Logout realizado. Template vazio ativo.');
     syncAuthButtons();
   } finally {
@@ -709,6 +766,26 @@ document.getElementById('chat-send').addEventListener('click', sendChat);
 document.getElementById('chat-text').addEventListener('keydown', (e)=>{ if (e.key === 'Enter') sendChat(); });
 document.getElementById('auth-email').addEventListener('keydown', (e)=>{ if (e.key === 'Enter') login(); });
 document.getElementById('auth-pass').addEventListener('keydown', (e)=>{ if (e.key === 'Enter') login(); });
+document.getElementById('onb-turma-count').addEventListener('input', (e)=>renderTurmaFields(e.target.value));
+document.getElementById('btn-config').addEventListener('click', ()=>openOnboarding(userPreferences));
+document.getElementById('onb-cancel').addEventListener('click', closeOnboarding);
+document.getElementById('onb-save').addEventListener('click', async ()=>{
+  if (!currentUser) return;
+  const cycleType = document.getElementById('onb-cycle').value;
+  const turmaCount = Number(document.getElementById('onb-turma-count').value || '1');
+  const moduleCount = Math.min(2, Math.max(1, Number(document.getElementById('onb-module-count').value || '1')));
+  const startDate = document.getElementById('onb-start-date').value || null;
+  const turmas = [...document.querySelectorAll('#onb-turmas input')].map(i=>i.value.trim()).filter(Boolean);
+  await savePreferences({
+    turmaCount,
+    cycleType,
+    moduleCount: cycleType === 'mod12' ? moduleCount : 2,
+    startDate,
+    turmas,
+    allowAiEdits: document.getElementById('allow-ai-edits').checked
+  });
+  closeOnboarding();
+});
 document.getElementById('btn-add-module').addEventListener('click', async ()=>{
   if (!currentUser || !userPreferences) return;
   userPreferences.module_count = 2;
@@ -716,6 +793,8 @@ document.getElementById('btn-add-module').addEventListener('click', async ()=>{
     turmaCount: userPreferences.turma_count,
     cycleType: userPreferences.cycle_type,
     moduleCount: userPreferences.module_count,
+    startDate: userPreferences.start_date || null,
+    turmas: userPreferences.turmas_json || [],
     allowAiEdits: userPreferences.allow_ai_edits
   });
 });
@@ -726,6 +805,8 @@ document.getElementById('allow-ai-edits').addEventListener('change', async (e)=>
     turmaCount: userPreferences.turma_count,
     cycleType: userPreferences.cycle_type,
     moduleCount: userPreferences.module_count,
+    startDate: userPreferences.start_date || null,
+    turmas: userPreferences.turmas_json || [],
     allowAiEdits: userPreferences.allow_ai_edits
   });
 });

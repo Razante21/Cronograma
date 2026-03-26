@@ -190,7 +190,7 @@ app.get('/api/preferences/:userId', async (req, res) => {
     const { userId } = req.params;
     const { data, error } = await sb
       .from('user_preferences')
-      .select('turma_count,cycle_type,module_count,allow_ai_edits')
+      .select('turma_count,cycle_type,module_count,start_date,turmas_json,allow_ai_edits')
       .eq('user_id', userId)
       .maybeSingle();
     if (error) return res.status(500).json({ error: error.message });
@@ -203,7 +203,7 @@ app.get('/api/preferences/:userId', async (req, res) => {
 
 app.post('/api/preferences/upsert', async (req, res) => {
   try {
-    const { userId, turmaCount = 1, cycleType = 'mod12', moduleCount = 1, allowAiEdits = false } = req.body || {};
+    const { userId, turmaCount = 1, cycleType = 'mod12', moduleCount = 1, startDate = null, turmas = [], allowAiEdits = false } = req.body || {};
     if (!userId) return res.status(400).json({ error: 'userId é obrigatório.' });
     const sb = requireSupabase();
     const { data, error } = await sb
@@ -214,12 +214,14 @@ app.post('/api/preferences/upsert', async (req, res) => {
           turma_count: Number(turmaCount) || 1,
           cycle_type: cycleType,
           module_count: Number(moduleCount) || 1,
+          start_date: startDate || null,
+          turmas_json: Array.isArray(turmas) ? turmas : [],
           allow_ai_edits: Boolean(allowAiEdits),
           updated_at: new Date().toISOString()
         },
         { onConflict: 'user_id' }
       )
-      .select('turma_count,cycle_type,module_count,allow_ai_edits')
+      .select('turma_count,cycle_type,module_count,start_date,turmas_json,allow_ai_edits')
       .single();
     if (error) return res.status(500).json({ error: error.message });
     return res.json({ preferences: data });
