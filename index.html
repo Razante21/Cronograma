@@ -98,10 +98,13 @@
   /* Botão de preview nos arquivos */
 
   .arq-dl:hover{background:#DCEEFF}
-  .auth-bar{max-width:920px;margin:0 auto 14px;display:flex;gap:8px;flex-wrap:wrap;align-items:center;justify-content:center}
+  .top-nav{max-width:980px;margin:0 auto 14px;display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap}
+  .nav-brand{font-family:'DM Mono',monospace;font-size:11px;letter-spacing:.08em;color:var(--muted);text-transform:uppercase}
+  .auth-bar{display:flex;gap:8px;flex-wrap:wrap;align-items:center;justify-content:flex-end}
   .auth-bar input{padding:8px 10px;border:1px solid var(--border);border-radius:7px;background:#fff;font-size:12px;min-width:190px}
   .auth-bar button{padding:8px 11px;border:1px solid #C8DCF7;background:#F0F7FF;color:#1A3C8F;border-radius:7px;font-size:12px;cursor:pointer}
   .auth-bar button:hover{background:#DCEEFF}
+  .auth-bar button:disabled{opacity:.45;cursor:not-allowed}
   .auth-status{font-size:11px;color:var(--sub)}
   .chat-fab{position:fixed;right:20px;bottom:20px;background:#1A3C8F;color:#fff;border:none;border-radius:999px;padding:12px 14px;cursor:pointer;z-index:220}
   .chat-box{position:fixed;right:20px;bottom:72px;width:320px;max-height:420px;background:var(--card);border:1px solid var(--border);border-radius:12px;box-shadow:0 12px 32px rgba(0,0,0,.2);display:none;flex-direction:column;z-index:220}
@@ -122,18 +125,21 @@
   <div class="hs">23/02 → 04/05 · Segundas e Quartas · 20/04 feriado (emenda Tiradentes) · clique em qualquer aula para ver o plano</div>
 </header>
 
-<div class="auth-bar">
-  <input id="auth-email" type="email" placeholder="Seu e-mail">
-  <input id="auth-pass" type="password" placeholder="Sua senha">
-  <button id="btn-login" type="button">Entrar</button>
-  <button id="btn-signup" type="button">Cadastrar</button>
-  <button id="btn-logout" type="button">Sair</button>
-  <button id="btn-add-module" type="button" style="display:none">+ Adicionar módulo</button>
-  <label class="auth-status" style="display:inline-flex;gap:6px;align-items:center">
-    <input type="checkbox" id="allow-ai-edits"> Permitir IA alterar
-  </label>
-  <span id="auth-status" class="auth-status">Template vazio ativo (faça login para sincronizar)</span>
-</div>
+<nav class="top-nav">
+  <div class="nav-brand">Cronograma · Conta</div>
+  <div class="auth-bar">
+    <input id="auth-email" type="email" placeholder="Seu e-mail">
+    <input id="auth-pass" type="password" placeholder="Sua senha">
+    <button id="btn-login" type="button">Entrar</button>
+    <button id="btn-signup" type="button">Cadastrar</button>
+    <button id="btn-logout" type="button">Sair</button>
+    <button id="btn-add-module" type="button" style="display:none">+ Adicionar módulo</button>
+    <label class="auth-status" style="display:inline-flex;gap:6px;align-items:center">
+      <input type="checkbox" id="allow-ai-edits"> Permitir IA alterar
+    </label>
+    <span id="auth-status" class="auth-status">Template vazio ativo (faça login para sincronizar)</span>
+  </div>
+</nav>
 
 <div class="grid">
 
@@ -241,6 +247,7 @@ const EMPTY_TEMPLATE_BY_DEFAULT = true;
 const MAIN_TEMPLATE_EMAIL = 'pcdsantos007@gmail.com';
 let sb = null;
 let currentUser = null;
+let authBusy = false;
 const userCards = {};
 let userPreferences = null;
 const originalCards = [];
@@ -513,14 +520,38 @@ function setAuthStatus(msg){
   document.getElementById('auth-status').textContent = msg;
 }
 
+function setAuthBusy(isBusy){
+  authBusy = isBusy;
+  ['btn-login','btn-signup','btn-logout'].forEach((id)=>{
+    const el = document.getElementById(id);
+    if (el) el.disabled = isBusy;
+  });
+}
+
+function syncAuthButtons(){
+  const logged = !!currentUser;
+  document.getElementById('btn-login').style.display = logged ? 'none' : '';
+  document.getElementById('btn-signup').style.display = logged ? 'none' : '';
+  document.getElementById('btn-logout').style.display = logged ? '' : 'none';
+}
+
 async function initAuth(){
   if (!SUPABASE_URL || !SUPABASE_ANON_KEY || !window.supabase?.createClient) {
     setAuthStatus('Sem Supabase configurado (crie app_config.js com URL/ANON_KEY).');
+    syncAuthButtons();
     return;
   }
   sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+  sb.auth.onAuthStateChange(async (_event, session) => {
+    await applySessionUser(session?.user || null);
+  });
   const { data } = await sb.auth.getSession();
-  currentUser = data?.session?.user || null;
+  await applySessionUser(data?.session?.user || null);
+}
+
+async function applySessionUser(user){
+  currentUser = user;
+  syncAuthButtons();
   if (!currentUser) {
     applyEmptyTemplateView();
     setAuthStatus('Template vazio ativo (faça login para sincronizar)');
@@ -539,45 +570,50 @@ async function initAuth(){
 }
 
 async function login(){
-  if (!sb) return;
-  const email = document.getElementById('auth-email').value.trim();
-  const password = document.getElementById('auth-pass').value;
-  const { error } = await sb.auth.signInWithPassword({ email, password });
-  if (error) return setAuthStatus(`Erro login: ${error.message}`);
-  const { data } = await sb.auth.getSession();
-  currentUser = data?.session?.user || null;
-  const isMain = (currentUser?.email || '').toLowerCase() === MAIN_TEMPLATE_EMAIL;
-  if (isMain) {
-    restoreOriginalTemplateView();
-    document.getElementById('btn-add-module').style.display = 'none';
-    setAuthStatus(`Logado: ${currentUser?.email || ''} · template principal ativo`);
-    return;
+  if (!sb || authBusy) return;
+  setAuthBusy(true);
+  try {
+    const email = document.getElementById('auth-email').value.trim();
+    const password = document.getElementById('auth-pass').value;
+    const { error } = await sb.auth.signInWithPassword({ email, password });
+    if (error) return setAuthStatus(`Erro login: ${error.message}`);
+    const { data } = await sb.auth.getSession();
+    await applySessionUser(data?.session?.user || null);
+  } finally {
+    setAuthBusy(false);
   }
-  applyEmptyTemplateView();
-  await ensurePreferences();
-  setAuthStatus(`Logado: ${currentUser?.email || ''}`);
-  await loadUserCards(true);
 }
 
 async function signup(){
-  if (!sb) return;
-  const email = document.getElementById('auth-email').value.trim();
-  const password = document.getElementById('auth-pass').value;
-  const { error } = await sb.auth.signUp({ email, password });
-  if (error) return setAuthStatus(`Erro cadastro: ${error.message}`);
-  setAuthStatus('Cadastro enviado. Verifique e-mail de confirmação (se habilitado).');
+  if (!sb || authBusy) return;
+  setAuthBusy(true);
+  try {
+    const email = document.getElementById('auth-email').value.trim();
+    const password = document.getElementById('auth-pass').value;
+    const { error } = await sb.auth.signUp({ email, password });
+    if (error) return setAuthStatus(`Erro cadastro: ${error.message}`);
+    setAuthStatus('Cadastro enviado. Verifique e-mail de confirmação (se habilitado).');
+  } finally {
+    setAuthBusy(false);
+  }
 }
 
 async function logout(){
-  if (!sb) return;
-  await sb.auth.signOut();
-  currentUser = null;
-  userPreferences = null;
-  Object.keys(userCards).forEach(k=>delete userCards[k]);
-  applyEmptyTemplateView();
-  document.querySelectorAll('.grid > div')[1].style.display = '';
-  document.getElementById('btn-add-module').style.display = 'none';
-  setAuthStatus('Logout realizado. Template vazio ativo.');
+  if (!sb || authBusy) return;
+  setAuthBusy(true);
+  try {
+    await sb.auth.signOut();
+    currentUser = null;
+    userPreferences = null;
+    Object.keys(userCards).forEach(k=>delete userCards[k]);
+    applyEmptyTemplateView();
+    document.querySelectorAll('.grid > div')[1].style.display = '';
+    document.getElementById('btn-add-module').style.display = 'none';
+    setAuthStatus('Logout realizado. Template vazio ativo.');
+    syncAuthButtons();
+  } finally {
+    setAuthBusy(false);
+  }
 }
 
 function applyCardToUI(cardId, title, description){
@@ -671,6 +707,8 @@ document.getElementById('chat-fab').addEventListener('click', ()=>document.getEl
 document.getElementById('chat-close').addEventListener('click', ()=>document.getElementById('chat-box').classList.remove('open'));
 document.getElementById('chat-send').addEventListener('click', sendChat);
 document.getElementById('chat-text').addEventListener('keydown', (e)=>{ if (e.key === 'Enter') sendChat(); });
+document.getElementById('auth-email').addEventListener('keydown', (e)=>{ if (e.key === 'Enter') login(); });
+document.getElementById('auth-pass').addEventListener('keydown', (e)=>{ if (e.key === 'Enter') login(); });
 document.getElementById('btn-add-module').addEventListener('click', async ()=>{
   if (!currentUser || !userPreferences) return;
   userPreferences.module_count = 2;
@@ -694,6 +732,7 @@ document.getElementById('allow-ai-edits').addEventListener('change', async (e)=>
 
 captureOriginalTemplateView();
 applyEmptyTemplateView();
+syncAuthButtons();
 initAuth();
 
 </script>
