@@ -7,6 +7,7 @@ API mínima para:
 ## Endpoints
 
 - `GET /health`
+- `GET /`
 - `POST /api/activities`
 - `POST /api/classify`
 
