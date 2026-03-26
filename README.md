@@ -37,6 +37,8 @@ E preencha no `app_config.js`:
 - `SUPABASE_ANON_KEY`
 - `API_BASE` (ex.: `http://localhost:8787`)
 
+Obs.: a conta `pcdsantos007@gmail.com` mantém visualização do template principal original ao logar.
+
 ## 3) Banco (Supabase)
 
 No SQL Editor do Supabase, rode:

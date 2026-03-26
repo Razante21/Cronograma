@@ -234,9 +234,12 @@ const SUPABASE_URL = window.APP_CONFIG.SUPABASE_URL || '';
 const SUPABASE_ANON_KEY = window.APP_CONFIG.SUPABASE_ANON_KEY || '';
 const API_BASE = (window.APP_CONFIG.API_BASE || 'http://localhost:8787').replace(/\/+$/,'');
 const EMPTY_TEMPLATE_BY_DEFAULT = true;
+const MAIN_TEMPLATE_EMAIL = 'pcdsantos007@gmail.com';
 let sb = null;
 let currentUser = null;
 const userCards = {};
+const originalCards = [];
+const originalPills = [];
 
 const D = {
   'i1':{m:'Aula 1 · 23/02 Seg',t:'Entender o que sabem + Formatação Simples',done:true,
@@ -424,6 +427,32 @@ function applyEmptyTemplateView(){
   if (pills[1]) pills[1].innerHTML = 'Avançado: <strong>20 aulas</strong> · 0 dadas · 20 restantes';
 }
 
+function captureOriginalTemplateView(){
+  document.querySelectorAll('.ac').forEach((card)=>{
+    originalCards.push({
+      ref: card,
+      done: card.classList.contains('done'),
+      title: card.querySelector('.nm')?.textContent || '',
+      desc: card.querySelector('.desc')?.textContent || '',
+      hint: card.querySelector('.hint')?.textContent || ''
+    });
+  });
+  document.querySelectorAll('.pill').forEach((pill)=>originalPills.push({ ref:pill, html:pill.innerHTML }));
+}
+
+function restoreOriginalTemplateView(){
+  originalCards.forEach((c)=>{
+    if (c.done) c.ref.classList.add('done'); else c.ref.classList.remove('done');
+    const nm = c.ref.querySelector('.nm');
+    const desc = c.ref.querySelector('.desc');
+    const hint = c.ref.querySelector('.hint');
+    if (nm) nm.textContent = c.title;
+    if (desc) desc.textContent = c.desc;
+    if (hint) hint.textContent = c.hint;
+  });
+  originalPills.forEach((p)=>{ p.ref.innerHTML = p.html; });
+}
+
 function setAuthStatus(msg){
   document.getElementById('auth-status').textContent = msg;
 }
@@ -436,7 +465,19 @@ async function initAuth(){
   sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
   const { data } = await sb.auth.getSession();
   currentUser = data?.session?.user || null;
-  setAuthStatus(currentUser ? `Logado: ${currentUser.email}` : 'Template vazio ativo (faça login para sincronizar)');
+  if (!currentUser) {
+    applyEmptyTemplateView();
+    setAuthStatus('Template vazio ativo (faça login para sincronizar)');
+    return;
+  }
+  if ((currentUser.email || '').toLowerCase() === MAIN_TEMPLATE_EMAIL) {
+    restoreOriginalTemplateView();
+    setAuthStatus(`Logado: ${currentUser.email} · template principal ativo`);
+    return;
+  }
+  applyEmptyTemplateView();
+  setAuthStatus(`Logado: ${currentUser.email}`);
+  await loadUserCards(true);
 }
 
 async function login(){
@@ -447,8 +488,15 @@ async function login(){
   if (error) return setAuthStatus(`Erro login: ${error.message}`);
   const { data } = await sb.auth.getSession();
   currentUser = data?.session?.user || null;
+  const isMain = (currentUser?.email || '').toLowerCase() === MAIN_TEMPLATE_EMAIL;
+  if (isMain) {
+    restoreOriginalTemplateView();
+    setAuthStatus(`Logado: ${currentUser?.email || ''} · template principal ativo`);
+    return;
+  }
+  applyEmptyTemplateView();
   setAuthStatus(`Logado: ${currentUser?.email || ''}`);
-  await loadUserCards();
+  await loadUserCards(true);
 }
 
 async function signup(){
@@ -480,13 +528,13 @@ function applyCardToUI(cardId, title, description){
   card.classList.remove('done');
 }
 
-async function loadUserCards(){
+async function loadUserCards(useEmptyBase = false){
   if (!currentUser) return;
   try {
     const resp = await fetch(`${API_BASE}/api/cards/${currentUser.id}`);
     const data = await resp.json();
     if (!resp.ok) throw new Error(data.error || 'Erro ao carregar cards');
-    applyEmptyTemplateView();
+    if (useEmptyBase) applyEmptyTemplateView();
     (data.cards || []).forEach(c=>{
       userCards[c.card_id] = { title: c.title, description: c.description, activityLink: c.activity_link || '' };
       applyCardToUI(c.card_id, c.title, c.description);
@@ -560,6 +608,7 @@ document.getElementById('chat-close').addEventListener('click', ()=>document.get
 document.getElementById('chat-send').addEventListener('click', sendChat);
 document.getElementById('chat-text').addEventListener('keydown', (e)=>{ if (e.key === 'Enter') sendChat(); });
 
+captureOriginalTemplateView();
 applyEmptyTemplateView();
 initAuth();
 
