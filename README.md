@@ -41,6 +41,7 @@ Obs.: a conta `pcdsantos007@gmail.com` mantém visualização do template princi
 Ao primeiro login de outras contas, o sistema pergunta quantidade de turmas e tipo de ciclo (`legacy` ou `mod12`) e salva isso por usuário.
 Há uma tela de configuração (navbar botão `⚙ Configurar`) para editar ciclo, quantidade de turmas, data de início e nomes das turmas.
 O chat também persiste histórico por usuário (mantém após F5/logout-login).
+Cada aula também possui editor visual (modal) para título, descrição, data e link da atividade.
 
 ## 3) Banco (Supabase)
 

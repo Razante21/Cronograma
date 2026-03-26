@@ -129,6 +129,11 @@
   .onb-turmas{display:grid;grid-template-columns:1fr 1fr;gap:8px}
   .onb-foot{display:flex;justify-content:flex-end;gap:8px;margin-top:12px}
   .tips-panel{position:fixed;left:18px;bottom:18px;background:var(--card);border:1px solid var(--border);border-radius:10px;padding:10px 12px;font-size:11px;max-width:260px;z-index:210}
+  .edit-ov{position:fixed;inset:0;background:rgba(0,0,0,.55);display:none;align-items:center;justify-content:center;z-index:280;padding:18px}
+  .edit-ov.open{display:flex}
+  .edit-card{width:100%;max-width:640px;background:var(--card);border:1px solid var(--border);border-radius:12px;padding:14px}
+  .edit-card input,.edit-card textarea{width:100%;padding:9px 10px;border:1px solid var(--border);border-radius:8px;font-size:12px;margin-top:6px}
+  .edit-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
 </style>
 </head>
 <body>
@@ -286,6 +291,22 @@
   </ul>
 </div>
 
+<div class="edit-ov" id="edit-ov">
+  <div class="edit-card">
+    <h3 id="edit-title">Editar aula</h3>
+    <div class="edit-grid">
+      <label>Título<input id="edit-name" type="text"></label>
+      <label>Data da aula<input id="edit-date" type="date"></label>
+    </div>
+    <label style="display:block;margin-top:8px">Descrição<textarea id="edit-desc" rows="4"></textarea></label>
+    <label style="display:block;margin-top:8px">Link da atividade (Google/Drive)<input id="edit-link" type="url"></label>
+    <div class="onb-foot">
+      <button class="arq" type="button" id="edit-cancel">Cancelar</button>
+      <button class="arq" type="button" id="edit-save">Salvar aula</button>
+    </div>
+  </div>
+</div>
+
 <button class="chat-fab" id="chat-fab" type="button">💬 Chat</button>
 <div class="chat-box" id="chat-box">
   <div class="chat-head">Assistente <button type="button" id="chat-close">✕</button></div>
@@ -309,6 +330,7 @@ let sb = null;
 let currentUser = null;
 let authBusy = false;
 let onbStep = 1;
+let editingCardId = null;
 const userCards = {};
 let userPreferences = null;
 const originalCards = [];
@@ -727,8 +749,10 @@ function applyCardToUI(cardId, title, description){
   if (!card) return;
   const nm = card.querySelector('.nm');
   const desc = card.querySelector('.desc');
+  const ad = card.querySelector('.ad');
   if (nm) nm.textContent = title;
   if (desc) desc.textContent = description;
+  if (ad && userCards[cardId]?.lessonDate) ad.textContent = userCards[cardId].lessonDate;
   card.classList.remove('done');
 }
 
@@ -740,7 +764,7 @@ async function loadUserCards(useEmptyBase = false){
     if (!resp.ok) throw new Error(data.error || 'Erro ao carregar cards');
     if (useEmptyBase) applyEmptyTemplateView();
     (data.cards || []).forEach(c=>{
-      userCards[c.card_id] = { title: c.title, description: c.description, activityLink: c.activity_link || '' };
+      userCards[c.card_id] = { title: c.title, description: c.description, activityLink: c.activity_link || '', lessonDate: c.lesson_date || '' };
       applyCardToUI(c.card_id, c.title, c.description);
     });
     setAuthStatus(`Logado: ${currentUser.email} · ${data.cards?.length || 0} aulas personalizadas`);
@@ -751,27 +775,50 @@ async function loadUserCards(useEmptyBase = false){
 
 async function editCard(id){
   if (!currentUser) return;
-  const baseTitle = userCards[id]?.title || '';
-  const baseDesc = userCards[id]?.description || '';
-  const title = prompt('Título da aula:', baseTitle);
-  if (!title) return;
-  const description = prompt('Descrição da aula:', baseDesc);
-  if (!description) return;
-  const activityLink = prompt('Link da atividade (Google Docs/Slides/Drive etc):', userCards[id]?.activityLink || '') || '';
+  editingCardId = id;
+  const current = userCards[id] || {};
+  document.getElementById('edit-title').textContent = `Editar aula ${id}`;
+  document.getElementById('edit-name').value = current.title || '';
+  document.getElementById('edit-desc').value = current.description || '';
+  document.getElementById('edit-link').value = current.activityLink || '';
+  document.getElementById('edit-date').value = current.lessonDate || '';
+  document.getElementById('edit-ov').classList.add('open');
+}
+
+async function saveEditCard(){
+  if (!currentUser || !editingCardId) return;
+  const title = document.getElementById('edit-name').value.trim();
+  const description = document.getElementById('edit-desc').value.trim();
+  const activityLink = document.getElementById('edit-link').value.trim();
+  const lessonDate = document.getElementById('edit-date').value || '';
+  if (!title || !description) return setAuthStatus('Preencha título e descrição.');
   try {
     const resp = await fetch(`${API_BASE}/api/cards/upsert`, {
       method:'POST',
       headers:{'Content-Type':'application/json'},
-      body: JSON.stringify({ userId: currentUser.id, cardId: id, title, description, activityLink })
+      body: JSON.stringify({
+        userId: currentUser.id,
+        cardId: editingCardId,
+        title,
+        description,
+        activityLink,
+        lessonDate
+      })
     });
     const data = await resp.json();
     if (!resp.ok) throw new Error(data.error || 'Erro ao salvar');
-    userCards[id] = { title: data.card.title, description: data.card.description, activityLink: data.card.activity_link || '' };
-    applyCardToUI(id, data.card.title, data.card.description);
-    setAuthStatus(`Salvo com sucesso: ${id}`);
-    o(id);
+    userCards[editingCardId] = {
+      title: data.card.title,
+      description: data.card.description,
+      activityLink: data.card.activity_link || '',
+      lessonDate: data.card.lesson_date || ''
+    };
+    applyCardToUI(editingCardId, data.card.title, data.card.description);
+    setAuthStatus(`Salvo com sucesso: ${editingCardId}`);
+    document.getElementById('edit-ov').classList.remove('open');
+    o(editingCardId);
   } catch (e) {
-    setAuthStatus(`Falha ao salvar ${id}: ${e.message}`);
+    setAuthStatus(`Falha ao salvar ${editingCardId}: ${e.message}`);
   }
 }
 
@@ -848,6 +895,8 @@ document.getElementById('onb-turma-count').addEventListener('input', (e)=>render
 document.getElementById('onb-cycle').addEventListener('change', (e)=>{
   if (e.target.value === 'legacy') document.getElementById('onb-module-count').value = 2;
 });
+document.getElementById('edit-cancel').addEventListener('click', ()=>document.getElementById('edit-ov').classList.remove('open'));
+document.getElementById('edit-save').addEventListener('click', saveEditCard);
 document.getElementById('btn-config').addEventListener('click', ()=>openOnboarding(userPreferences));
 document.getElementById('onb-cancel').addEventListener('click', closeOnboarding);
 document.getElementById('onb-prev').addEventListener('click', ()=>setOnbStep(onbStep-1));
@@ -892,6 +941,9 @@ document.getElementById('allow-ai-edits').addEventListener('change', async (e)=>
     turmas: userPreferences.turmas_json || [],
     allowAiEdits: userPreferences.allow_ai_edits
   });
+});
+document.getElementById('edit-ov').addEventListener('click', (e)=>{
+  if (e.target === document.getElementById('edit-ov')) document.getElementById('edit-ov').classList.remove('open');
 });
 
 captureOriginalTemplateView();

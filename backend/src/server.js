@@ -109,7 +109,7 @@ app.get('/api/cards/:userId', async (req, res) => {
     const sb = requireSupabase();
     const { data, error } = await sb
       .from('user_card_content')
-      .select('card_id,title,description,activity_link,updated_at')
+      .select('card_id,title,description,activity_link,lesson_date,updated_at')
       .eq('user_id', userId);
 
     if (error) {
@@ -130,7 +130,7 @@ app.get('/api/cards/:userId', async (req, res) => {
 
 app.post('/api/cards/upsert', async (req, res) => {
   try {
-    const { userId, cardId, title, description, activityLink = '' } = req.body || {};
+    const { userId, cardId, title, description, activityLink = '', lessonDate = null } = req.body || {};
     if (!userId || !cardId || !title || !description) {
       return res.status(400).json({ error: 'userId, cardId, title e description são obrigatórios.' });
     }
@@ -144,11 +144,12 @@ app.post('/api/cards/upsert', async (req, res) => {
           title,
           description,
           activity_link: activityLink || null,
+          lesson_date: lessonDate || null,
           updated_at: new Date().toISOString()
         },
         { onConflict: 'user_id,card_id' }
       )
-      .select('card_id,title,description,activity_link,updated_at')
+      .select('card_id,title,description,activity_link,lesson_date,updated_at')
       .single();
 
     if (error) {

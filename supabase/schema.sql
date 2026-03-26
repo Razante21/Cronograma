@@ -83,12 +83,15 @@ create table if not exists public.user_card_content (
   title text not null,
   description text not null,
   activity_link text,
+  lesson_date date,
   updated_at timestamptz not null default now(),
   unique(user_id, card_id)
 );
 
 alter table public.user_card_content
 add column if not exists activity_link text;
+alter table public.user_card_content
+add column if not exists lesson_date date;
 
 create table if not exists public.user_preferences (
   id uuid primary key default gen_random_uuid(),
