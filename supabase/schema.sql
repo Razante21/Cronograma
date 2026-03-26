@@ -254,3 +254,33 @@ for all using (auth.uid() = user_id) with check (auth.uid() = user_id);
 
 create policy "user_preferences_all_own" on public.user_preferences
 for all using (auth.uid() = user_id) with check (auth.uid() = user_id);
+
+-- ===== Feature: calendário automático e tags =====
+alter table public.user_preferences add column if not exists weekdays_json jsonb not null default '[1,3]'::jsonb;
+alter table public.user_preferences add column if not exists calendar_json jsonb not null default '{}'::jsonb;
+alter table public.user_card_content add column if not exists tags text;
+
+-- ===== Feature: sugestões da IA =====
+create table if not exists public.ai_suggestions (
+  id uuid primary key default gen_random_uuid(),
+  user_id uuid not null references auth.users(id) on delete cascade,
+  card_id text not null,
+  field text not null,
+  current_value text,
+  suggested_value text not null,
+  reason text,
+  status text not null default 'pending' check (status in ('pending','approved','rejected')),
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
+);
+
+alter table public.ai_suggestions enable row level security;
+
+drop trigger if exists trg_ai_suggestions_updated on public.ai_suggestions;
+create trigger trg_ai_suggestions_updated
+before update on public.ai_suggestions
+for each row execute function public.set_updated_at();
+
+drop policy if exists "ai_suggestions_all_own" on public.ai_suggestions;
+create policy "ai_suggestions_all_own" on public.ai_suggestions
+for all using (auth.uid() = user_id) with check (auth.uid() = user_id);

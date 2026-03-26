@@ -136,6 +136,48 @@
   .edit-card{width:100%;max-width:640px;background:var(--card);border:1px solid var(--border);border-radius:12px;padding:14px}
   .edit-card input,.edit-card textarea{width:100%;padding:9px 10px;border:1px solid var(--border);border-radius:8px;font-size:12px;margin-top:6px}
   .edit-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+
+  /* ===== WIZARD MELHORADO ===== */
+  .onb-progress{height:5px;background:var(--border);border-radius:3px;margin-bottom:6px;overflow:hidden}
+  .onb-progress-fill{height:100%;background:#1A3C8F;border-radius:3px;transition:width .35s ease}
+  .onb-step-labels{display:flex;justify-content:space-between;font-size:9px;color:var(--muted);margin-bottom:12px;text-transform:uppercase;letter-spacing:.07em}
+  .onb-summary-row{display:flex;gap:6px;align-items:flex-start;margin-bottom:8px;font-size:12px}
+  .onb-summary-label{color:var(--muted);min-width:100px;flex-shrink:0}
+  .onb-summary-val{color:var(--main);font-weight:500}
+
+  /* ===== TAGS NO EDITOR ===== */
+  .edit-tags-grid{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px}
+  .tag-btn{font-size:11px;font-weight:500;border-radius:4px;padding:4px 9px;cursor:pointer;border:1px solid var(--border);background:var(--card);color:var(--sub);transition:all .15s;user-select:none}
+  .tag-btn:hover{border-color:#aaa}
+  .tag-btn.sel-word{background:var(--word-bg);color:var(--word-c);border-color:var(--word-d)}
+  .tag-btn.sel-excel{background:var(--excel-bg);color:var(--excel-c);border-color:var(--excel-d)}
+  .tag-btn.sel-ppt{background:var(--ppt-bg);color:var(--ppt-c);border-color:var(--ppt-d)}
+  .tag-btn.sel-google{background:var(--google-bg);color:var(--google-c);border-color:var(--google-d)}
+  .tag-btn.sel-canva{background:var(--canva-bg);color:var(--canva-c);border-color:var(--canva-d)}
+  .tag-btn.sel-ia{background:var(--ia-bg);color:var(--ia-c);border-color:var(--ia-d)}
+  .tag-btn.sel-rev{background:var(--rev-bg);color:var(--rev-c);border-color:var(--rev-d)}
+  .tag-btn.sel-prova{background:var(--prova-bg);color:var(--prova-c);border-color:var(--prova-d)}
+  .tag-btn.sel-enc{background:var(--enc-bg);color:var(--enc-c);border-color:var(--enc-d)}
+
+  /* ===== PAINEL DE SUGESTÕES DA IA ===== */
+  .sugg-badge{position:fixed;right:20px;bottom:128px;background:#D4386A;color:#fff;border-radius:999px;font-size:11px;font-weight:600;padding:3px 9px;z-index:225;display:none;box-shadow:0 2px 8px rgba(0,0,0,.25)}
+  .sugg-panel{position:fixed;right:20px;bottom:128px;width:360px;max-height:400px;background:var(--card);border:1px solid var(--border);border-radius:14px;box-shadow:0 12px 32px rgba(0,0,0,.2);display:none;flex-direction:column;z-index:224;overflow:hidden}
+  .sugg-panel.open{display:flex}
+  .sugg-head{padding:10px 12px;border-bottom:1px solid var(--border);font-size:12px;font-weight:600;display:flex;justify-content:space-between;align-items:center;gap:6px}
+  .sugg-head span{flex:1}
+  .sugg-list{overflow-y:auto;flex:1;padding:8px}
+  .sugg-item{background:#fff;border:1px solid var(--border);border-radius:8px;padding:9px 10px;margin-bottom:7px;font-size:11px}
+  .sugg-item:last-child{margin-bottom:0}
+  .sugg-top{display:flex;gap:6px;align-items:flex-start;margin-bottom:5px}
+  .sugg-card-id{font-family:'DM Mono',monospace;font-size:10px;background:#EAF2FF;border:1px solid #C8DCF7;border-radius:4px;padding:1px 6px;color:#1A3C8F;flex-shrink:0}
+  .sugg-field{font-family:'DM Mono',monospace;font-size:10px;color:var(--muted);flex-shrink:0}
+  .sugg-reason{color:var(--sub);flex:1;line-height:1.4}
+  .sugg-new{color:var(--main);font-weight:500;margin-bottom:5px;word-break:break-word}
+  .sugg-actions{display:flex;gap:6px}
+  .sugg-approve{padding:4px 10px;background:#E4F2EA;border:1px solid #2E8B57;color:#1A4A30;border-radius:6px;font-size:11px;font-weight:600;cursor:pointer}
+  .sugg-reject{padding:4px 10px;background:#FFECEC;border:1px solid #D43838;color:#8C1A1A;border-radius:6px;font-size:11px;cursor:pointer}
+  .sugg-approve:hover{background:#d0ead8}.sugg-reject:hover{background:#ffd8d8}
+  .sugg-empty{text-align:center;padding:20px;font-size:12px;color:var(--muted)}
 </style>
 </head>
 <body>
@@ -251,35 +293,62 @@
 <div class="onb" id="onb">
   <div class="onb-card">
     <h3 style="margin-bottom:10px">Configuração inicial do cronograma</h3>
+    <div class="onb-progress"><div class="onb-progress-fill" id="onb-prog" style="width:25%"></div></div>
+    <div class="onb-step-labels">
+      <span>1. Ciclo</span><span>2. Calendário</span><span>3. Turmas</span><span>4. Resumo</span>
+    </div>
     <div class="onb-steps">
       <span class="onb-dot active" data-stepdot="1">1. Ciclo</span>
       <span class="onb-dot" data-stepdot="2">2. Calendário</span>
       <span class="onb-dot" data-stepdot="3">3. Turmas</span>
+      <span class="onb-dot" data-stepdot="4">4. Resumo</span>
     </div>
+
     <div class="onb-step active" data-step="1">
+      <p style="font-size:12px;color:var(--sub);margin-bottom:8px">Qual é o ciclo de aulas?</p>
       <div class="onb-row">
         <select id="onb-cycle">
-          <option value="mod12">Ciclo novo (Módulo 1 e 2)</option>
+          <option value="mod12">Ciclo novo (Módulo 1 e 2 · 33 aulas)</option>
           <option value="legacy">Ciclo passado (Básico / Intermediário / Avançado)</option>
         </select>
-        <input id="onb-turma-count" type="number" min="1" max="10" placeholder="Quantidade de turmas">
+        <input id="onb-turma-count" type="number" min="1" max="10" placeholder="Nº de turmas">
       </div>
     </div>
+
     <div class="onb-step" data-step="2">
+      <p style="font-size:12px;color:var(--sub);margin-bottom:8px">Configure o calendário das aulas:</p>
       <div class="onb-row">
-        <input id="onb-start-date" type="date">
-        <input id="onb-module-count" type="number" min="1" max="2" placeholder="Quantidade de módulos (1 ou 2)">
+        <label style="font-size:12px">Data de início<br><input id="onb-start-date" type="date" style="margin-top:4px"></label>
+        <label style="font-size:12px">Módulos<br><input id="onb-module-count" type="number" min="1" max="2" placeholder="1 ou 2" style="margin-top:4px"></label>
+      </div>
+      <div class="onb-row" style="margin-top:4px">
+        <label style="font-size:12px;width:100%">Dias das aulas por semana<br>
+          <div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:6px" id="onb-weekdays">
+            <label style="display:flex;gap:4px;align-items:center;font-size:12px"><input type="checkbox" value="1" checked> Seg</label>
+            <label style="display:flex;gap:4px;align-items:center;font-size:12px"><input type="checkbox" value="2"> Ter</label>
+            <label style="display:flex;gap:4px;align-items:center;font-size:12px"><input type="checkbox" value="3" checked> Qua</label>
+            <label style="display:flex;gap:4px;align-items:center;font-size:12px"><input type="checkbox" value="4"> Qui</label>
+            <label style="display:flex;gap:4px;align-items:center;font-size:12px"><input type="checkbox" value="5"> Sex</label>
+          </div>
+        </label>
       </div>
     </div>
+
     <div class="onb-step" data-step="3">
-      <p style="font-size:12px;color:var(--sub);margin-bottom:8px">Edite os nomes das turmas abaixo:</p>
+      <p style="font-size:12px;color:var(--sub);margin-bottom:8px">Nomeie suas turmas:</p>
       <div id="onb-turmas" class="onb-turmas"></div>
     </div>
+
+    <div class="onb-step" data-step="4">
+      <p style="font-size:12px;color:var(--sub);margin-bottom:10px">Confirme suas configurações:</p>
+      <div id="onb-summary"></div>
+    </div>
+
     <div class="onb-foot">
       <button class="arq" type="button" id="onb-cancel">Cancelar</button>
       <button class="arq" type="button" id="onb-prev">Voltar</button>
-      <button class="arq" type="button" id="onb-next">Próximo</button>
-      <button class="arq" type="button" id="onb-save" style="display:none">Salvar configuração</button>
+      <button class="arq" type="button" id="onb-next">Próximo →</button>
+      <button class="arq" type="button" id="onb-save" style="display:none;background:#EAF2FF;border-color:#1A3C8F;color:#1A3C8F">Salvar configuração</button>
     </div>
     <div class="onb-msg" id="onb-msg"></div>
   </div>
@@ -299,16 +368,41 @@
   <div class="edit-card">
     <h3 id="edit-title">Editar aula</h3>
     <div class="edit-grid">
-      <label>Título<input id="edit-name" type="text"></label>
+      <label>Título<input id="edit-name" type="text" placeholder="Ex: Introdução ao Word"></label>
       <label>Data da aula<input id="edit-date" type="date"></label>
     </div>
-    <label style="display:block;margin-top:8px">Descrição<textarea id="edit-desc" rows="4"></textarea></label>
-    <label style="display:block;margin-top:8px">Link da atividade (Google/Drive)<input id="edit-link" type="url"></label>
-    <div class="onb-foot">
+    <label style="display:block;margin-top:8px">Descrição<textarea id="edit-desc" rows="3" placeholder="Resumo do conteúdo desta aula"></textarea></label>
+    <label style="display:block;margin-top:8px">Link da atividade (Google Docs/Sheets/Slides/Drive)
+      <input id="edit-link" type="url" placeholder="https://docs.google.com/...">
+    </label>
+    <label style="display:block;margin-top:10px;font-size:12px;color:var(--sub)">Tag da aula
+      <div class="edit-tags-grid" id="edit-tags-grid">
+        <button class="tag-btn" data-tag="word" type="button">Word</button>
+        <button class="tag-btn" data-tag="excel" type="button">Excel</button>
+        <button class="tag-btn" data-tag="ppt" type="button">PowerPoint</button>
+        <button class="tag-btn" data-tag="google" type="button">Google</button>
+        <button class="tag-btn" data-tag="canva" type="button">Canva</button>
+        <button class="tag-btn" data-tag="ia" type="button">IA</button>
+        <button class="tag-btn" data-tag="rev" type="button">Revisão</button>
+        <button class="tag-btn" data-tag="prova" type="button">Prova</button>
+        <button class="tag-btn" data-tag="enc" type="button">Encerramento</button>
+      </div>
+    </label>
+    <div style="margin-top:12px;padding-top:10px;border-top:1px solid var(--border);display:flex;justify-content:flex-end;gap:8px">
       <button class="arq" type="button" id="edit-cancel">Cancelar</button>
-      <button class="arq" type="button" id="edit-save">Salvar aula</button>
+      <button class="arq" type="button" id="edit-save" style="background:#EAF2FF;border-color:#1A3C8F;color:#1A3C8F">Salvar aula</button>
     </div>
   </div>
+</div>
+
+<div class="sugg-badge" id="sugg-badge">0 sugestões</div>
+<div class="sugg-panel" id="sugg-panel">
+  <div class="sugg-head">
+    <span>Sugestões da IA</span>
+    <button type="button" id="sugg-refresh" style="font-size:11px;background:none;border:none;cursor:pointer;color:var(--sub)">↻</button>
+    <button type="button" id="sugg-close" style="font-size:16px;background:none;border:none;cursor:pointer;color:var(--sub)">✕</button>
+  </div>
+  <div class="sugg-list" id="sugg-list"><div class="sugg-empty">Nenhuma sugestão pendente.</div></div>
 </div>
 
 <button class="chat-fab" id="chat-fab" type="button">💬 Chat</button>
@@ -339,6 +433,161 @@ const userCards = {};
 let userPreferences = null;
 const originalCards = [];
 const originalPills = [];
+
+// ===== FEATURE: Preview Google robusto =====
+function toGoogleEmbedUrl(url) {
+  if (!url) return '';
+  try {
+    const u = new URL(url);
+    const h = u.hostname;
+    if (h.includes('docs.google.com')) {
+      // Remove fragment, force preview mode
+      return url.replace(/\/(edit|view|pub)(#.*)?$/, '/preview').replace(/\/preview#.*$/, '/preview');
+    }
+    if (h.includes('drive.google.com')) {
+      const m = url.match(/\/file\/d\/([^/]+)/);
+      if (m) return `https://drive.google.com/file/d/${m[1]}/preview`;
+    }
+    if (h.includes('sheets.google.com')) {
+      return url.replace(/\/(edit|view)(#.*)?$/, '/preview');
+    }
+  } catch {}
+  return url;
+}
+
+// ===== FEATURE: Calendário automático =====
+const FERIADOS_2026 = new Set([
+  '2026-01-01','2026-03-02','2026-03-03','2026-04-03','2026-04-05',
+  '2026-04-21','2026-05-01','2026-06-11','2026-09-07',
+  '2026-10-12','2026-11-02','2026-11-15','2026-12-25'
+]);
+
+function calcLessonDates(startDate, weekdays, count = 33) {
+  if (!startDate || !weekdays || weekdays.length === 0) return {};
+  const result = {};
+  const wdSet = new Set(weekdays.map(Number));
+  let current = new Date(startDate + 'T00:00:00');
+  let lesson = 1;
+  let maxIter = 500;
+  while (lesson <= count && maxIter-- > 0) {
+    const wd = current.getDay(); // 0=dom,...,6=sab
+    const iso = current.toISOString().slice(0,10);
+    if (wdSet.has(wd) && !FERIADOS_2026.has(iso)) {
+      result[`lesson_${lesson}`] = iso;
+      lesson++;
+    }
+    current.setDate(current.getDate() + 1);
+  }
+  return result;
+}
+
+function getCalendarDate(cardId) {
+  if (!userPreferences?.calendar_json) return '';
+  // card_id: i1..i20 → lesson_1..lesson_20, a1..a20 → lesson_1..lesson_20 (same slot)
+  const m = cardId.match(/^[ia](\d+)$/);
+  if (!m) return '';
+  return userPreferences.calendar_json[`lesson_${m[1]}`] || '';
+}
+
+function formatDateBR(isoDate) {
+  if (!isoDate) return '';
+  const [y,mo,d] = isoDate.split('-');
+  const wd = ['Dom','Seg','Ter','Qua','Qui','Sex','Sáb'][new Date(isoDate+'T00:00:00').getDay()];
+  return `${d}/${mo} ${wd}`;
+}
+
+// ===== FEATURE: Sugestões da IA =====
+let suggestionsPending = [];
+
+async function loadAiSuggestions() {
+  if (!currentUser) return;
+  try {
+    const resp = await fetch(`${API_BASE}/api/ai-suggestions/${currentUser.id}?status=pending`);
+    const data = await resp.json();
+    suggestionsPending = data.suggestions || [];
+    renderAiSuggestions();
+  } catch {}
+}
+
+function renderAiSuggestions() {
+  const badge = document.getElementById('sugg-badge');
+  const list = document.getElementById('sugg-list');
+  const count = suggestionsPending.length;
+  badge.textContent = `${count} sugest${count === 1 ? 'ão' : 'ões'}`;
+  badge.style.display = count > 0 ? '' : 'none';
+  if (count === 0) {
+    list.innerHTML = '<div class="sugg-empty">Nenhuma sugestão pendente.</div>';
+    return;
+  }
+  list.innerHTML = suggestionsPending.map(s => `
+    <div class="sugg-item" id="sugg-${s.id}">
+      <div class="sugg-top">
+        <span class="sugg-card-id">${s.card_id}</span>
+        <span class="sugg-field">${s.field}</span>
+        <span class="sugg-reason">${s.reason || ''}</span>
+      </div>
+      <div class="sugg-new">${escHtml(s.suggested_value)}</div>
+      <div class="sugg-actions">
+        <button class="sugg-approve" onclick="handleSuggestion('${s.id}','approve')">✓ Aprovar</button>
+        <button class="sugg-reject" onclick="handleSuggestion('${s.id}','reject')">✕ Rejeitar</button>
+      </div>
+    </div>`).join('');
+}
+
+function escHtml(str) {
+  return String(str || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+async function handleSuggestion(id, action) {
+  if (!currentUser) return;
+  const item = document.getElementById(`sugg-${id}`);
+  if (item) item.style.opacity = '0.5';
+  try {
+    const resp = await fetch(`${API_BASE}/api/ai-suggestions/${id}`, {
+      method:'PATCH',
+      headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({ userId: currentUser.id, action })
+    });
+    const data = await resp.json();
+    if (!resp.ok) throw new Error(data.error);
+    suggestionsPending = suggestionsPending.filter(s => s.id !== id);
+    if (action === 'approve') {
+      // Recarregar cards do servidor para refletir mudança
+      await loadUserCards(false);
+    }
+    renderAiSuggestions();
+  } catch (e) {
+    if (item) item.style.opacity = '1';
+    setAuthStatus(`Erro ao processar sugestão: ${e.message}`);
+  }
+}
+
+// ===== FEATURE: Tags no editor =====
+let selectedTag = '';
+
+function initTagButtons() {
+  document.querySelectorAll('#edit-tags-grid .tag-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const tag = btn.dataset.tag;
+      if (selectedTag === tag) {
+        selectedTag = '';
+        btn.classList.remove(`sel-${tag}`);
+      } else {
+        document.querySelectorAll('#edit-tags-grid .tag-btn').forEach(b => b.className = 'tag-btn');
+        selectedTag = tag;
+        btn.classList.add(`sel-${tag}`);
+      }
+    });
+  });
+}
+
+function setTagSelection(tag) {
+  selectedTag = tag || '';
+  document.querySelectorAll('#edit-tags-grid .tag-btn').forEach(btn => {
+    btn.className = 'tag-btn';
+    if (btn.dataset.tag === selectedTag) btn.classList.add(`sel-${selectedTag}`);
+  });
+}
 
 const D = {
   'i1':{m:'Aula 1 · 23/02 Seg',t:'Entender o que sabem + Formatação Simples',done:true,
@@ -480,26 +729,34 @@ function o(id){
   }
   const a=D[id]; if(!a) return;
   const override = userCards[id] || {};
+  // Data: banco > calculado > template
+  const lessonDate = override.lessonDate || getCalendarDate(id);
+  const dateDisplay = lessonDate ? formatDateBR(lessonDate) : (a.m || '');
   const display = {
-    m: a.m,
-    t: override.title || `${a.an || 'Aula'} sem título`,
-    tp: [override.description || 'Sem descrição ainda. Clique em editar para preencher.'],
-    arq: [],
-    activityLink: override.activityLink || ''
+    m: lessonDate ? `${dateDisplay} · ${id.startsWith('i') ? 'Intermediário' : 'Avançado'}` : a.m,
+    t: override.title || `Aula sem título`,
+    tp: [override.description || 'Sem descrição ainda. Clique em Editar para preencher.'],
+    activityLink: override.activityLink || '',
+    tag: override.tags || ''
   };
   document.getElementById('mm').textContent=display.m;
   document.getElementById('mt').textContent=display.t;
   let h='';
+  if (display.tag) {
+    h+=`<div class="ms"><span class="tag tag-${display.tag}">${display.tag.charAt(0).toUpperCase()+display.tag.slice(1)}</span></div>`;
+  }
   if(display.tp){
-    h+='<div class="ms"><div class="mst">O que passar</div>';
-    display.tp.forEach(t=>{h+=`<div class="tp"><span class="tb">→</span><span>${t}</span></div>`;});
+    h+='<div class="ms"><div class="mst">Conteúdo</div>';
+    display.tp.forEach(t=>{h+=`<div class="tp"><span class="tb">→</span><span>${escHtml(t)}</span></div>`;});
     h+='</div>';
   }
   if (display.activityLink) {
-    h+=`<div class="ms"><div class="mst">Atividade</div><a class="arq" href="${display.activityLink}" target="_blank" rel="noopener">🔗 Abrir atividade</a></div>`;
-    h+=`<div class="ms"><iframe src="${display.activityLink}" style="width:100%;height:260px;border:1px solid #ddd;border-radius:8px;background:#fff"></iframe></div>`;
+    const embedUrl = toGoogleEmbedUrl(display.activityLink);
+    h+=`<div class="ms"><div class="mst">Atividade</div>`;
+    h+=`<a class="arq" href="${display.activityLink}" target="_blank" rel="noopener">🔗 Abrir em nova aba</a></div>`;
+    h+=`<div class="ms"><iframe src="${embedUrl}" style="width:100%;height:320px;border:1px solid #ddd;border-radius:8px;background:#fff" allow="autoplay"></iframe></div>`;
   }
-  h+=`<div class="ms"><button class="arq" type="button" onclick="editCard('${id}')">✏️ Editar conteúdo desta aula</button></div>`;
+  h+=`<div class="ms"><button class="arq" type="button" onclick="editCard('${id}')">✏️ Editar esta aula</button></div>`;
   document.getElementById('mb').innerHTML=h;
   document.getElementById('ov').classList.add('open');
   document.body.style.overflow='hidden';
@@ -589,25 +846,62 @@ function renderTurmaFields(count, values = []){
 }
 
 function setOnbStep(step){
-  onbStep = Math.max(1, Math.min(3, step));
+  onbStep = Math.max(1, Math.min(4, step));
   document.querySelectorAll('.onb-step').forEach((el)=>{
     el.classList.toggle('active', Number(el.dataset.step) === onbStep);
   });
   document.querySelectorAll('.onb-dot').forEach((el)=>{
     el.classList.toggle('active', Number(el.dataset.stepdot) === onbStep);
   });
+  const fill = document.getElementById('onb-prog');
+  if (fill) fill.style.width = `${(onbStep / 4) * 100}%`;
   document.getElementById('onb-prev').style.display = onbStep === 1 ? 'none' : '';
-  document.getElementById('onb-next').style.display = onbStep === 3 ? 'none' : '';
-  document.getElementById('onb-save').style.display = onbStep === 3 ? '' : 'none';
+  document.getElementById('onb-next').style.display = onbStep === 4 ? 'none' : '';
+  document.getElementById('onb-save').style.display = onbStep === 4 ? '' : 'none';
+  if (onbStep === 4) buildOnbSummary();
+}
+
+function getSelectedWeekdays() {
+  return [...document.querySelectorAll('#onb-weekdays input[type=checkbox]:checked')]
+    .map(cb => Number(cb.value));
+}
+
+function buildOnbSummary() {
+  const cycle = document.getElementById('onb-cycle');
+  const cycleLabel = cycle.options[cycle.selectedIndex]?.text || '';
+  const turmaCount = document.getElementById('onb-turma-count').value;
+  const startDate = document.getElementById('onb-start-date').value;
+  const moduleCount = document.getElementById('onb-module-count').value;
+  const weekdays = getSelectedWeekdays();
+  const wdNames = ['Dom','Seg','Ter','Qua','Qui','Sex','Sáb'];
+  const turmas = [...document.querySelectorAll('#onb-turmas input')].map(i=>i.value.trim()).filter(Boolean);
+
+  let html = `
+    <div class="onb-summary-row"><span class="onb-summary-label">Ciclo:</span><span class="onb-summary-val">${escHtml(cycleLabel)}</span></div>
+    <div class="onb-summary-row"><span class="onb-summary-label">Turmas:</span><span class="onb-summary-val">${turmaCount} turma(s)${turmas.length ? ': ' + turmas.join(', ') : ''}</span></div>
+    <div class="onb-summary-row"><span class="onb-summary-label">Módulos:</span><span class="onb-summary-val">${moduleCount}</span></div>
+    <div class="onb-summary-row"><span class="onb-summary-label">Início:</span><span class="onb-summary-val">${startDate ? formatDateBR(startDate) : 'Não definido'}</span></div>
+    <div class="onb-summary-row"><span class="onb-summary-label">Dias das aulas:</span><span class="onb-summary-val">${weekdays.map(d=>wdNames[d]).join(' + ') || 'Nenhum'}</span></div>`;
+
+  if (startDate && weekdays.length > 0) {
+    const cal = calcLessonDates(startDate, weekdays, 5);
+    const preview = Object.values(cal).map(formatDateBR).join(', ');
+    html += `<div class="onb-summary-row"><span class="onb-summary-label">1ª aulas:</span><span class="onb-summary-val">${preview}...</span></div>`;
+  }
+  document.getElementById('onb-summary').innerHTML = html;
 }
 
 function openOnboarding(prefill = null){
-  const p = prefill || { cycle_type:'mod12', turma_count:1, module_count:1, start_date:'', turmas_json:[] };
+  const p = prefill || { cycle_type:'mod12', turma_count:1, module_count:1, start_date:'', turmas_json:[], weekdays_json:[1,3] };
   document.getElementById('onb-cycle').value = p.cycle_type || 'mod12';
   document.getElementById('onb-turma-count').value = p.turma_count || 1;
   document.getElementById('onb-module-count').value = p.module_count || 1;
   document.getElementById('onb-start-date').value = p.start_date || '';
   renderTurmaFields(p.turma_count || 1, p.turmas_json || []);
+  const savedWd = Array.isArray(p.weekdays_json) ? p.weekdays_json.map(Number) : [1,3];
+  document.querySelectorAll('#onb-weekdays input[type=checkbox]').forEach(cb => {
+    cb.checked = savedWd.includes(Number(cb.value));
+  });
   document.getElementById('onb-msg').textContent = '';
   document.getElementById('onb').classList.add('open');
   setOnbStep(1);
@@ -629,6 +923,28 @@ async function savePreferences(prefs){
   if (!resp.ok) throw new Error(data.error || 'Erro ao salvar preferências');
   userPreferences = data.preferences;
   applyPreferencesLayout();
+  applyCalendarDates();
+}
+
+function applyCalendarDates(){
+  if (!userPreferences) return;
+  const wd = Array.isArray(userPreferences.weekdays_json) ? userPreferences.weekdays_json : [1,3];
+  const startDate = userPreferences.start_date;
+  if (!startDate) return;
+  const cal = calcLessonDates(startDate, wd, 33);
+  userPreferences.calendar_json = cal;
+  // Atualiza as datas visíveis nos cards que ainda não têm data manual
+  document.querySelectorAll('.ac').forEach(card => {
+    const onclick = card.getAttribute('onclick') || '';
+    const m = onclick.match(/o\('([^']+)'\)/);
+    if (!m) return;
+    const id = m[1];
+    if (userCards[id]?.lessonDate) return; // tem data manual, não sobrescreve
+    const calDate = getCalendarDate(id);
+    if (!calDate) return;
+    const adEl = card.querySelector('.ad');
+    if (adEl) adEl.textContent = formatDateBR(calDate);
+  });
 }
 
 async function ensurePreferences(){
@@ -639,6 +955,7 @@ async function ensurePreferences(){
   if (data.preferences) {
     userPreferences = data.preferences;
     applyPreferencesLayout();
+    applyCalendarDates();
     return;
   }
   openOnboarding();
@@ -703,6 +1020,7 @@ async function applySessionUser(user){
   setAuthStatus(`Logado: ${currentUser.email}`);
   await loadUserCards(true);
   await loadChatHistory();
+  await loadAiSuggestions();
 }
 
 async function login(){
@@ -775,9 +1093,10 @@ async function loadUserCards(useEmptyBase = false){
     if (!resp.ok) throw new Error(data.error || 'Erro ao carregar cards');
     if (useEmptyBase) applyEmptyTemplateView();
     (data.cards || []).forEach(c=>{
-      userCards[c.card_id] = { title: c.title, description: c.description, activityLink: c.activity_link || '', lessonDate: c.lesson_date || '' };
+      userCards[c.card_id] = { title: c.title, description: c.description, activityLink: c.activity_link || '', lessonDate: c.lesson_date || '', tags: c.tags || '' };
       applyCardToUI(c.card_id, c.title, c.description);
     });
+    applyCalendarDates();
     setAuthStatus(`Logado: ${currentUser.email} · ${data.cards?.length || 0} aulas personalizadas`);
   } catch (e) {
     setAuthStatus(`Logado: ${currentUser.email} (falha ao carregar cards: ${e.message})`);
@@ -788,11 +1107,14 @@ async function editCard(id){
   if (!currentUser) return;
   editingCardId = id;
   const current = userCards[id] || {};
-  document.getElementById('edit-title').textContent = `Editar aula ${id}`;
+  // Preencher data calculada se não tiver data manual
+  const calDate = getCalendarDate(id);
+  document.getElementById('edit-title').textContent = `Editar aula — ${id.toUpperCase()}`;
   document.getElementById('edit-name').value = current.title || '';
   document.getElementById('edit-desc').value = current.description || '';
   document.getElementById('edit-link').value = current.activityLink || '';
-  document.getElementById('edit-date').value = current.lessonDate || '';
+  document.getElementById('edit-date').value = current.lessonDate || calDate || '';
+  setTagSelection(current.tags || '');
   document.getElementById('edit-ov').classList.add('open');
 }
 
@@ -802,6 +1124,7 @@ async function saveEditCard(){
   const description = document.getElementById('edit-desc').value.trim();
   const activityLink = document.getElementById('edit-link').value.trim();
   const lessonDate = document.getElementById('edit-date').value || '';
+  const tags = selectedTag || '';
   if (!title || !description) return setAuthStatus('Preencha título e descrição.');
   try {
     const resp = await fetch(`${API_BASE}/api/cards/upsert`, {
@@ -813,7 +1136,8 @@ async function saveEditCard(){
         title,
         description,
         activityLink,
-        lessonDate
+        lessonDate,
+        tags
       })
     });
     const data = await resp.json();
@@ -822,10 +1146,11 @@ async function saveEditCard(){
       title: data.card.title,
       description: data.card.description,
       activityLink: data.card.activity_link || '',
-      lessonDate: data.card.lesson_date || ''
+      lessonDate: data.card.lesson_date || '',
+      tags: data.card.tags || ''
     };
     applyCardToUI(editingCardId, data.card.title, data.card.description);
-    setAuthStatus(`Salvo com sucesso: ${editingCardId}`);
+    setAuthStatus(`Aula ${editingCardId} salva.`);
     document.getElementById('edit-ov').classList.remove('open');
     o(editingCardId);
   } catch (e) {
@@ -879,15 +1204,29 @@ async function sendChat(){
   await persistChatMessage('Você', text);
   try {
     const allowAiEdits = document.getElementById('allow-ai-edits').checked;
+    // Contexto de cards para a IA
+    const cardContext = Object.entries(userCards).map(([card_id, c]) => ({ card_id, title: c.title, description: c.description }));
+    // Histórico recente do chat (últimas 6 mensagens)
+    const chatLog = document.getElementById('chat-log');
+    const history = [...chatLog.querySelectorAll('.chat-msg')].slice(-6).map(el => ({
+      role: el.classList.contains('user') ? 'user' : 'assistant',
+      content: el.textContent
+    }));
     const resp = await fetch(`${API_BASE}/api/chat`, {
       method:'POST',
       headers:{'Content-Type':'application/json'},
-      body: JSON.stringify({ message: text, userId: currentUser?.id || null, allowAiEdits })
+      body: JSON.stringify({ message: text, userId: currentUser?.id || null, allowAiEdits, cardContext, history })
     });
     const data = await resp.json();
     if (!resp.ok) throw new Error(data.error || 'Erro no chat');
-    appendChat('Assistente', data.answer || 'Sem resposta.');
-    await persistChatMessage('Assistente', data.answer || 'Sem resposta.');
+    const answer = data.answer || 'Sem resposta.';
+    appendChat('Assistente', answer);
+    await persistChatMessage('Assistente', answer);
+    // Se vieram sugestões, atualizar o painel
+    if (data.suggestionCount > 0) {
+      await loadAiSuggestions();
+      appendChat('Assistente', `💡 ${data.suggestionCount} sugestão(ões) criada(s). Veja o painel de sugestões (↗).`);
+    }
   } catch (e) {
     appendChat('Assistente', `Falha: ${e.message}`);
     await persistChatMessage('Assistente', `Falha: ${e.message}`);
@@ -921,14 +1260,19 @@ document.getElementById('onb-save').addEventListener('click', async ()=>{
     const moduleCount = Math.min(2, Math.max(1, Number(document.getElementById('onb-module-count').value || '1')));
     const startDate = document.getElementById('onb-start-date').value || null;
     const turmas = [...document.querySelectorAll('#onb-turmas input')].map(i=>i.value.trim()).filter(Boolean);
+    const weekdays = getSelectedWeekdays();
     if (!turmaCount || turmaCount < 1) throw new Error('Quantidade de turmas inválida.');
+    if (weekdays.length === 0) throw new Error('Selecione pelo menos um dia da semana.');
+    const calendarJson = startDate ? calcLessonDates(startDate, weekdays, 33) : {};
     await savePreferences({
       turmaCount,
       cycleType,
       moduleCount: cycleType === 'mod12' ? moduleCount : 2,
       startDate,
       turmas,
-      allowAiEdits: document.getElementById('allow-ai-edits').checked
+      allowAiEdits: document.getElementById('allow-ai-edits').checked,
+      weekdays,
+      calendarJson
     });
     closeOnboarding();
   } catch (e) {
@@ -963,6 +1307,15 @@ document.getElementById('edit-ov').addEventListener('click', (e)=>{
   if (e.target === document.getElementById('edit-ov')) document.getElementById('edit-ov').classList.remove('open');
 });
 
+// ===== Sugestões da IA =====
+document.getElementById('sugg-close').addEventListener('click', ()=> document.getElementById('sugg-panel').classList.remove('open'));
+document.getElementById('sugg-refresh').addEventListener('click', loadAiSuggestions);
+document.getElementById('sugg-badge').addEventListener('click', ()=>{
+  document.getElementById('sugg-panel').classList.toggle('open');
+});
+
+// ===== Inicialização =====
+initTagButtons();
 captureOriginalTemplateView();
 applyEmptyTemplateView();
 syncAuthButtons();
