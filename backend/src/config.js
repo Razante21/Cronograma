@@ -46,6 +46,6 @@ export const config = {
   supabaseUrl: process.env.SUPABASE_URL,
   supabaseServiceRoleKey: process.env.SUPABASE_SERVICE_ROLE_KEY,
   geminiApiKey: process.env.GEMINI_API_KEY,
-  geminiModel: process.env.GEMINI_MODEL || 'gemini-1.5-flash',
+  geminiModel: process.env.GEMINI_MODEL || 'gemini-3.1-flash-lite-preview',
   aiConfidenceThreshold: Number(process.env.AI_CONFIDENCE_THRESHOLD || 0.72)
 };

@@ -1,2 +1,4 @@
 backend/node_modules/
 .env
+app_config.js
+v2/app_config.js

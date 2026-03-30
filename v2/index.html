@@ -1,0 +1,478 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Cronograma FIEC</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<!-- SIDEBAR (hidden until logged in) -->
+<aside class="sidebar" id="main-sidebar" style="display:none">
+  <div class="sidebar-logo"><span>📅</span></div>
+  <button class="nav-btn" data-tab="home" title="Início">
+    <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+  </button>
+  <button class="nav-btn active" data-tab="schedule" title="Meu Cronograma">
+    <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+  </button>
+  <button class="nav-btn" data-tab="gallery" title="Galeria">
+    <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
+  </button>
+  <button class="nav-btn" data-tab="history" title="Histórico do Chat">
+    <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+  </button>
+  <button class="nav-btn nav-rel" data-tab="suggestions" title="Sugestões IA" id="sugg-nav-btn">
+    <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+    <span class="sugg-badge" id="sugg-badge" style="display:none"></span>
+  </button>
+  <div class="nav-spacer"></div>
+  <button class="nav-btn" data-tab="profile" title="Perfil">
+    <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+  </button>
+</aside>
+
+<!-- LANDING (not logged in) -->
+<div id="landing" style="display:none">
+  <!-- NAVBAR -->
+  <nav class="land-nav">
+    <div class="land-nav-logo">
+      <div class="land-nav-logo-icon">📅</div>
+      Cronograma FIEC
+    </div>
+    <div class="land-nav-actions">
+      <button class="btn btn-ghost" id="land-login-btn">Entrar</button>
+      <button class="btn btn-primary" id="land-register-btn">Criar conta</button>
+    </div>
+  </nav>
+
+  <!-- HERO -->
+  <div class="land-hero">
+    <div class="land-badge">✦ Para professores do FIEC</div>
+    <h1 class="land-h1">Organize suas aulas com<br><span>inteligência</span></h1>
+    <p class="land-p">Cronogramas automáticos por turma, IA para sugestões de conteúdo, galeria pública de professores — tudo num único lugar.</p>
+    <div class="land-cta">
+      <button class="btn btn-primary" id="land-cta-btn" style="padding:12px 28px;font-size:15px">Começar agora →</button>
+      <button class="btn btn-ghost" id="land-cta-login" style="padding:12px 28px;font-size:15px">Já tenho conta</button>
+    </div>
+  </div>
+
+  <div class="land-divider"></div>
+
+  <!-- FUNCIONALIDADES -->
+  <div class="land-section">
+    <div class="land-section-label">Funcionalidades</div>
+    <h2 class="land-section-title">Tudo que você precisa para dar aula</h2>
+    <p class="land-section-sub">Ferramentas pensadas para professores que ensinam informática e precisam de organização.</p>
+    <div class="land-grid">
+      <div class="land-card">
+        <div class="land-card-icon">📅</div>
+        <div class="land-card-title">Calendário automático</div>
+        <div class="land-card-desc">Datas geradas automaticamente por turma, pulando feriados nacionais.</div>
+      </div>
+      <div class="land-card">
+        <div class="land-card-icon">🤖</div>
+        <div class="land-card-title">IA Gemini integrada</div>
+        <div class="land-card-desc">Peça sugestões de conteúdo, descrições de aulas ou preenchimento automático via chat.</div>
+      </div>
+      <div class="land-card">
+        <div class="land-card-icon">👥</div>
+        <div class="land-card-title">Múltiplas turmas</div>
+        <div class="land-card-desc">Cada turma com seus próprios dias de aula e calendário independente.</div>
+      </div>
+      <div class="land-card">
+        <div class="land-card-icon">🔁</div>
+        <div class="land-card-title">Dois ciclos</div>
+        <div class="land-card-desc">Gerencie dois ciclos simultâneos com abas separadas no mesmo cronograma.</div>
+      </div>
+      <div class="land-card">
+        <div class="land-card-icon">🌐</div>
+        <div class="land-card-title">Galeria pública</div>
+        <div class="land-card-desc">Veja o cronograma de outros professores e compare abordagens.</div>
+      </div>
+      <div class="land-card">
+        <div class="land-card-icon">🔗</div>
+        <div class="land-card-title">Links de atividades</div>
+        <div class="land-card-desc">Vincule Google Docs, Drive e PDFs diretamente em cada aula.</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="land-divider"></div>
+
+  <!-- COMO USAR -->
+  <div class="land-section">
+    <div class="land-section-label">Como funciona</div>
+    <h2 class="land-section-title">Em 4 passos simples</h2>
+    <div class="land-steps">
+      <div class="land-step">
+        <div class="land-step-num">1</div>
+        <div class="land-step-body">
+          <div class="land-step-title">Crie sua conta</div>
+          <div class="land-step-desc">Cadastre com e-mail e senha. Gratuito, sem cartão.</div>
+        </div>
+      </div>
+      <div class="land-step">
+        <div class="land-step-num">2</div>
+        <div class="land-step-body">
+          <div class="land-step-title">Configure suas turmas</div>
+          <div class="land-step-desc">Defina nomes das turmas, dias de aula por semana e data de início. O calendário é gerado automaticamente.</div>
+        </div>
+      </div>
+      <div class="land-step">
+        <div class="land-step-num">3</div>
+        <div class="land-step-body">
+          <div class="land-step-title">Adicione ou edite suas aulas</div>
+          <div class="land-step-desc">Escreva títulos, conteúdo, links de atividades e etiquetas para cada aula.</div>
+        </div>
+      </div>
+      <div class="land-step">
+        <div class="land-step-num">4</div>
+        <div class="land-step-body">
+          <div class="land-step-title">Use a IA como assistente</div>
+          <div class="land-step-desc">Abra o Chat IA para pedir sugestões, reformular descrições ou preencher aulas automaticamente.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="land-footer">
+    Cronograma FIEC · 2026 · Feito para professores que ensinam com dedicação
+  </div>
+</div>
+
+<!-- AUTH MODAL (login / cadastro) -->
+<div class="modal-bg" id="auth-modal">
+  <div class="modal" style="max-width:400px">
+    <div class="modal-head">
+      <h2 id="auth-title">Entrar</h2>
+      <button class="modal-close" id="auth-modal-close">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="auth-msg" id="auth-msg"></div>
+      <div class="form-group">
+        <label>E-mail</label>
+        <input type="email" id="auth-email" placeholder="seu@email.com" autocomplete="email">
+      </div>
+      <div class="form-group">
+        <label>Senha</label>
+        <input type="password" id="auth-pass" placeholder="••••••••" autocomplete="current-password">
+      </div>
+      <div class="form-group" id="auth-name-group" style="display:none">
+        <label>Seu nome</label>
+        <input type="text" id="auth-name" placeholder="Ex: Professora Ana">
+      </div>
+      <button class="btn btn-primary" id="auth-submit" style="width:100%;justify-content:center">Entrar</button>
+      <p class="auth-switch">Não tem conta? <a id="auth-toggle">Criar conta</a></p>
+      <div class="auth-divider"><span>ou</span></div>
+      <button class="btn btn-google" id="auth-google" style="width:100%;justify-content:center">
+        <svg width="18" height="18" viewBox="0 0 48 48"><path fill="#FFC107" d="M43.6 20H24v8h11.3C33.6 33 29.3 36 24 36c-6.6 0-12-5.4-12-12s5.4-12 12-12c3 0 5.7 1.1 7.8 2.9l6-6C34.4 6.5 29.5 4 24 4 12.9 4 4 12.9 4 24s8.9 20 20 20c11 0 20-9 20-20 0-1.3-.1-2.7-.4-4z"/><path fill="#FF3D00" d="M6.3 14.7l6.6 4.8C14.6 16 19 13 24 13c3 0 5.7 1.1 7.8 2.9l6-6C34.4 6.5 29.5 4 24 4 16.3 4 9.7 8.3 6.3 14.7z"/><path fill="#4CAF50" d="M24 44c5.3 0 10.1-1.9 13.8-5.1l-6.4-5.4C29.4 35.1 26.8 36 24 36c-5.2 0-9.6-3.2-11.4-7.8l-6.5 5C9.5 39.6 16.3 44 24 44z"/><path fill="#1976D2" d="M43.6 20H24v8h11.3c-.9 2.6-2.7 4.8-5 6.2l6.4 5.4C40.5 36.3 44 30.6 44 24c0-1.3-.1-2.7-.4-4z"/></svg>
+        Continuar com Google
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- MAIN APP -->
+<div class="main" id="app" style="display:none">
+  <!-- TOPBAR -->
+  <div class="topbar">
+    <div class="topbar-title" id="topbar-title">Meu Cronograma <span id="topbar-sub"></span></div>
+    <div class="pill-row" id="pill-row"></div>
+    <button class="btn btn-ghost" id="wizard-btn" style="display:none">⚙ Configurar</button>
+    <button class="btn btn-ghost" id="import-excel-btn" title="Importar cronograma do Excel">📥 Importar Excel</button>
+    <input type="file" id="excel-input" accept=".xlsx,.xls,.csv" style="display:none">
+    <button class="btn btn-ghost" id="chat-fab-top">💬 Chat IA</button>
+  </div>
+
+  <!-- SCHEDULE VIEW -->
+  <div class="view active" id="view-schedule">
+    <div class="cycle-bar" id="cycle-bar">
+      <div class="cycle-tab-sw">
+        <button class="cycle-tab c1" id="cycle-btn-1">Ciclo 1</button>
+        <button class="cycle-tab" id="cycle-btn-2">Ciclo 2</button>
+      </div>
+      <span style="font-size:12px;color:var(--text-muted)" id="cycle-label">Módulo 1</span>
+    </div>
+    <div id="setup-banner" class="setup-banner">
+      <div>
+        <h3>Configure seu cronograma</h3>
+        <p>Defina suas turmas, dias de aula e data de início para começar.</p>
+      </div>
+      <button class="btn btn-primary" id="setup-btn">Configurar agora</button>
+    </div>
+    <div class="grid" id="main-grid">
+      <div class="col ci" id="col-i">
+        <div class="col-header">
+          <span class="col-name" id="col-i-name">Turma 1</span>
+          <span class="col-count" id="col-i-count">0 aulas</span>
+        </div>
+        <div id="cards-i"></div>
+        <button class="add-card" id="add-i" style="display:none">＋ Adicionar aula</button>
+      </div>
+      <div class="col ca" id="col-a">
+        <div class="col-header">
+          <span class="col-name" id="col-a-name">Turma 2</span>
+          <span class="col-count" id="col-a-count">0 aulas</span>
+        </div>
+        <div id="cards-a"></div>
+        <button class="add-card" id="add-a" style="display:none">＋ Adicionar aula</button>
+      </div>
+      <div class="col cb" id="col-b" style="display:none">
+        <div class="col-header">
+          <span class="col-name" id="col-b-name">Turma 3</span>
+          <span class="col-count" id="col-b-count">0 aulas</span>
+        </div>
+        <div id="cards-b"></div>
+        <button class="add-card" id="add-b" style="display:none">＋ Adicionar aula</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- GALLERY VIEW -->
+  <div class="view" id="view-gallery">
+    <div class="sched-header">
+      <h2>Cronogramas dos professores</h2>
+      <button class="btn btn-ghost" id="gallery-refresh">↺ Atualizar</button>
+    </div>
+    <div class="gallery-grid" id="gallery-grid">
+      <div class="empty-state"><p>Carregando...</p></div>
+    </div>
+  </div>
+
+  <!-- SUGGESTIONS VIEW (panel) -->
+  <div class="sugg-panel" id="sugg-panel">
+    <div class="sugg-head">
+      <h2>Sugestões da IA</h2>
+      <button class="modal-close" id="sugg-close">✕</button>
+    </div>
+    <div class="sugg-list" id="sugg-list"></div>
+  </div>
+
+  <!-- HOME VIEW -->
+  <div class="view" id="view-home">
+    <div class="home-logo">📅</div>
+    <h1 class="home-title">Cronograma <span>FIEC</span></h1>
+    <p class="home-sub">Sistema de gerenciamento de cronogramas para professores do FIEC. Organize suas aulas, turmas e atividades com inteligência artificial integrada.</p>
+    <div class="home-feat-grid">
+      <div class="home-feat"><div class="home-feat-icon">📅</div><div class="home-feat-title">Calendário automático</div><div class="home-feat-desc">Datas calculadas automaticamente por turma, pulando feriados nacionais.</div></div>
+      <div class="home-feat"><div class="home-feat-icon">🤖</div><div class="home-feat-title">IA Gemini</div><div class="home-feat-desc">Sugestões e preenchimento automático de aulas via Gemini 2.0 Flash.</div></div>
+      <div class="home-feat"><div class="home-feat-icon">👥</div><div class="home-feat-title">Múltiplas turmas</div><div class="home-feat-desc">Turmas independentes com dias de aula e calendários diferentes.</div></div>
+      <div class="home-feat"><div class="home-feat-icon">🌐</div><div class="home-feat-title">Galeria pública</div><div class="home-feat-desc">Veja e compartilhe cronogramas de outros professores.</div></div>
+      <div class="home-feat"><div class="home-feat-icon">🔁</div><div class="home-feat-title">Dois ciclos</div><div class="home-feat-desc">Gerencie dois ciclos simultâneos com abas separadas no cronograma.</div></div>
+      <div class="home-feat"><div class="home-feat-icon">🔗</div><div class="home-feat-title">Links de atividades</div><div class="home-feat-desc">Vincule Google Docs, Drive e PDFs diretamente em cada aula.</div></div>
+    </div>
+    <div class="home-section-title">Como usar</div>
+    <div class="home-steps">
+      <div class="home-step"><div class="home-step-num">1</div><div class="home-step-body"><strong>Crie sua conta</strong>Faça login ou crie uma conta no botão da tela inicial.</div></div>
+      <div class="home-step"><div class="home-step-num">2</div><div class="home-step-body"><strong>Configure o cronograma</strong>No perfil, clique em "Editar configurações" para definir turmas, dias de aula e data de início.</div></div>
+      <div class="home-step"><div class="home-step-num">3</div><div class="home-step-body"><strong>Adicione suas aulas</strong>Clique em "＋ Adicionar aula" em qualquer coluna para criar e personalizar aulas.</div></div>
+      <div class="home-step"><div class="home-step-num">4</div><div class="home-step-body"><strong>Use a IA</strong>Abra o Chat IA para pedir sugestões, textos ou preenchimento automático de conteúdo.</div></div>
+    </div>
+    <div style="font-size:12px;color:var(--text-muted);padding-bottom:32px">Versão 2.0 · FIEC 2026</div>
+  </div>
+
+  <!-- HISTORY VIEW -->
+  <div class="view" id="view-history">
+    <div class="history-header">Histórico do Chat</div>
+    <div class="chat-log-history" id="history-log"></div>
+  </div>
+
+  <!-- PROFILE VIEW -->
+  <div class="view" id="view-profile">
+    <div class="profile-section">
+      <h3>Minha Conta</h3>
+      <div class="profile-row"><span class="profile-label">E-mail</span><span class="profile-val" id="prof-email">—</span></div>
+      <div class="profile-row">
+        <span class="profile-label">Nome</span>
+        <span class="profile-val" id="prof-name">—</span>
+      </div>
+      <div class="profile-row" style="flex-direction:column;align-items:flex-start;gap:8px">
+        <span class="profile-label" style="margin-bottom:0">Editar nome</span>
+        <div style="display:flex;gap:8px;width:100%">
+          <input type="text" id="prof-name-input" placeholder="Seu nome de exibição"
+            style="flex:1;padding:8px 12px;background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius-sm);color:var(--text);font-size:13px;font-family:inherit;outline:none">
+          <button class="btn btn-primary" id="prof-name-save" style="flex-shrink:0">Salvar</button>
+        </div>
+      </div>
+      <div class="profile-row"><span class="profile-label">Turmas</span><span class="profile-val" id="prof-turmas">—</span></div>
+      <div class="profile-row"><span class="profile-label">Início</span><span class="profile-val" id="prof-start">—</span></div>
+      <div style="margin-top:24px;display:flex;gap:8px;flex-wrap:wrap">
+        <button class="btn btn-ghost" id="prof-wizard">⚙ Editar configurações</button>
+        <button class="btn btn-danger" id="prof-logout">Sair</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- WIZARD MODAL -->
+<div class="modal-bg" id="onb-modal">
+  <div class="modal">
+    <div class="modal-head">
+      <h2 id="onb-modal-title">Configurar Cronograma</h2>
+      <button class="modal-close" id="onb-close">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="onb-msg" id="onb-msg"></div>
+      <div class="step-ind" id="step-ind"></div>
+
+      <!-- Step 1: Ciclo -->
+      <div class="onb-step active" id="onb-s1">
+        <label class="onb-label">Tipo de ciclo</label>
+        <div class="seg-btns" id="onb-cycle">
+          <button class="seg-btn sel" data-val="mod12">Padrão (33 aulas)</button>
+          <button class="seg-btn" data-val="legacy">Legado (20 aulas)</button>
+        </div>
+        <label class="onb-label">Número de módulos</label>
+        <div class="seg-btns" id="onb-mods">
+          <button class="seg-btn sel" data-val="1">1 módulo</button>
+          <button class="seg-btn" data-val="2">2 módulos</button>
+        </div>
+      </div>
+
+      <!-- Step 2: Data inicio -->
+      <div class="onb-step" id="onb-s2">
+        <label class="onb-label">Data de início das aulas</label>
+        <input type="date" class="onb-input" id="onb-start">
+        <label class="onb-label">Nome para exibição pública</label>
+        <input type="text" class="onb-input" id="onb-display-name" placeholder="Ex: Professora Gemi">
+      </div>
+
+      <!-- Step 3: Turmas + dias -->
+      <div class="onb-step" id="onb-s3">
+        <label class="onb-label">Número de turmas</label>
+        <div class="seg-btns" id="onb-turma-count">
+          <button class="seg-btn sel" data-val="1">1 turma</button>
+          <button class="seg-btn" data-val="2">2 turmas</button>
+          <button class="seg-btn" data-val="3">3 turmas</button>
+        </div>
+        <div id="onb-turmas"></div>
+      </div>
+
+      <!-- Step 4: IA -->
+      <div class="onb-step" id="onb-s4">
+        <label class="onb-label">Permitir que a IA edite aulas automaticamente?</label>
+        <div class="seg-btns" id="onb-ai">
+          <button class="seg-btn" data-val="true">Sim, permitir</button>
+          <button class="seg-btn sel" data-val="false">Não, só sugerir</button>
+        </div>
+      </div>
+
+      <!-- Step 5: Resumo -->
+      <div class="onb-step" id="onb-s5">
+        <div class="onb-summary" id="onb-summary"></div>
+      </div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn btn-ghost" id="onb-back">Voltar</button>
+      <button class="btn btn-primary" id="onb-next">Próximo</button>
+    </div>
+  </div>
+</div>
+
+<!-- LESSON DETAIL MODAL -->
+<div class="modal-bg" id="detail-modal">
+  <div class="modal">
+    <div class="modal-head">
+      <h2 id="detail-col-label">Aula</h2>
+      <button class="modal-close" id="detail-close">✕</button>
+    </div>
+    <div class="modal-body" id="detail-body"></div>
+    <div class="modal-foot">
+      <button class="btn btn-ghost" id="detail-edit">✏ Editar</button>
+      <button class="modal-close btn btn-ghost" id="detail-close2">Fechar</button>
+    </div>
+  </div>
+</div>
+
+<!-- EDIT CARD MODAL -->
+<div class="modal-bg" id="edit-modal">
+  <div class="modal">
+    <div class="modal-head">
+      <h2>Editar Aula</h2>
+      <button class="modal-close" id="edit-close">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="edit-form" id="edit-form">
+        <div>
+          <label>Título da aula</label>
+          <input type="text" id="edit-title" placeholder="Ex: Introdução ao Excel">
+        </div>
+        <div>
+          <label>Conteúdo / descrição</label>
+          <textarea id="edit-desc" placeholder="Descreva os tópicos abordados..."></textarea>
+        </div>
+        <div>
+          <label>Link da atividade (Google Docs, Drive, etc.)</label>
+          <input type="url" id="edit-link" placeholder="https://...">
+        </div>
+        <div>
+          <label>Data da aula</label>
+          <input type="date" id="edit-date">
+        </div>
+        <div>
+          <label>Tag</label>
+          <div class="tag-grid" id="edit-tags">
+            <button class="tag-btn" data-tag="revisao">📘 Revisão</button>
+            <button class="tag-btn" data-tag="pratica">🟢 Prática</button>
+            <button class="tag-btn" data-tag="prova">🔴 Prova</button>
+            <button class="tag-btn" data-tag="projeto">🟡 Projeto</button>
+            <button class="tag-btn" data-tag="nova">🟣 Nova</button>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn btn-ghost" id="edit-close2">Cancelar</button>
+      <button class="btn btn-primary" id="edit-save">Salvar aula</button>
+    </div>
+  </div>
+</div>
+
+<!-- CHAT -->
+<div class="chat-box" id="chat-box">
+  <div class="chat-head">
+    <div class="chat-head-avatar">🤖</div>
+    <div><div class="chat-head-title">Assistente IA</div><div class="chat-head-sub" id="chat-sub">Gemini</div></div>
+    <button class="chat-close" id="chat-close">✕</button>
+  </div>
+  <div class="chat-log" id="chat-log"></div>
+  <div class="chat-input-area">
+    <input type="text" id="chat-input" placeholder="Pergunte sobre as aulas...">
+    <button class="chat-send" id="chat-send">➤</button>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<!-- PUBLIC SCHEDULE OVERLAY -->
+<div id="pub-sched-overlay">
+  <div class="pub-topbar">
+    <div class="pub-topbar-title" id="pub-sched-title">Cronograma</div>
+    <button class="btn btn-ghost" id="pub-sched-close">✕ Fechar</button>
+  </div>
+  <div class="grid" id="pub-sched-grid" style="flex:1;overflow:hidden">
+    <div class="col ci">
+      <div class="col-header"><span class="col-name" id="pub-col-i-name">Turma 1</span><span class="col-count" id="pub-col-i-count" style="background:var(--accent-i-soft);color:var(--accent-i)"></span></div>
+      <div id="pub-cards-i"></div>
+    </div>
+    <div class="col ca">
+      <div class="col-header"><span class="col-name" id="pub-col-a-name">Turma 2</span><span class="col-count" id="pub-col-a-count" style="background:var(--accent-a-soft);color:var(--accent-a)"></span></div>
+      <div id="pub-cards-a"></div>
+    </div>
+    <div class="col cb" id="pub-col-b" style="display:none">
+      <div class="col-header"><span class="col-name" id="pub-col-b-name">Turma 3</span><span class="col-count" id="pub-col-b-count" style="background:var(--accent-b-soft);color:var(--accent-b)"></span></div>
+      <div id="pub-cards-b"></div>
+    </div>
+  </div>
+</div>
+
+<script src="./app_config.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
