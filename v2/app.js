@@ -45,9 +45,13 @@ const FERIADOS_2026 = new Set(['2026-01-01','2026-03-03','2026-04-03','2026-04-0
 function calcLessonDates(startDate, weekdays, count=33) {
   if (!startDate || !weekdays || !weekdays.length) return {};
   const result = {}, wdSet = new Set(weekdays.map(Number));
-  let cur = new Date(startDate+'T00:00:00'), lesson = 1, max = 500;
+  // Usa partes da data diretamente para evitar problema de timezone
+  const [sy, sm, sd] = startDate.split('-').map(Number);
+  let cur = new Date(sy, sm-1, sd); // date local sem UTC offset
+  let lesson = 1, max = 500;
   while (lesson <= count && max-- > 0) {
-    const iso = cur.toISOString().slice(0,10);
+    const y = cur.getFullYear(), mo = cur.getMonth()+1, d = cur.getDate();
+    const iso = `${y}-${String(mo).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
     if (wdSet.has(cur.getDay()) && !FERIADOS_2026.has(iso)) { result[`lesson_${lesson}`] = iso; lesson++; }
     cur.setDate(cur.getDate()+1);
   }
@@ -194,18 +198,24 @@ function renderSchedule() {
   const prefix1 = currentCycle===2 ? 'c' : 'i';
   const prefix2 = currentCycle===2 ? 'd' : 'a';
   const prefix3 = currentCycle===2 ? 'e' : 'b';
-  const turmaCount = turmas.length || 2;
+  const turmaCount = prefs?.turma_count || turmas.length || 1;
 
   document.getElementById('col-i-name').textContent = turmas[0] || 'Turma 1';
   document.getElementById('col-a-name').textContent = turmas[1] || 'Turma 2';
   document.getElementById('col-b-name').textContent = turmas[2] || 'Turma 3';
+  document.getElementById('col-a').style.display = turmaCount>=2 ? '' : 'none';
   document.getElementById('col-b').style.display = turmaCount>=3 ? '' : 'none';
   document.getElementById('main-grid').classList.toggle('cols-3', turmaCount>=3);
+  // Força largura do grid via style para 1 turma
+  const mainGrid = document.getElementById('main-grid');
+  if (turmaCount === 1) mainGrid.style.gridTemplateColumns = '1fr';
+  else if (turmaCount >= 3) mainGrid.style.gridTemplateColumns = '';
+  else mainGrid.style.gridTemplateColumns = '1fr 1fr';
   document.getElementById('wizard-btn').style.display = currentUser ? '' : 'none';
   document.getElementById('setup-banner').style.display = (!prefs && currentUser) ? 'flex' : 'none';
 
   renderCol(prefix1);
-  renderCol(prefix2);
+  if (turmaCount >= 2) renderCol(prefix2);
   if (turmaCount >= 3) renderCol(prefix3);
   updatePills();
 }
@@ -549,12 +559,12 @@ function openWizard() {
   document.getElementById('onb-display-name').value = p?.display_name || currentUser?.user_metadata?.display_name || '';
   ['onb-cycle','onb-mods','onb-turma-count','onb-ai'].forEach(gId => {
     const map = { 'onb-cycle': p?.cycle_type||'mod12', 'onb-mods': String(p?.module_count||1),
-                  'onb-turma-count': String(p?.turma_count||2), 'onb-ai': String(p?.allow_ai_edits||false) };
+                  'onb-turma-count': String(p?.turma_count||1), 'onb-ai': String(p?.allow_ai_edits||false) };
     document.querySelectorAll(`#${gId} .seg-btn`).forEach(b => b.classList.toggle('sel', b.dataset.val===map[gId]));
   });
   let wdPerTurma = p?.weekdays_json || [[1,3],[2,4]];
   if (!Array.isArray(wdPerTurma[0])) wdPerTurma = [wdPerTurma, wdPerTurma];
-  renderTurmaFields(Number(p?.turma_count||2), p?.turmas_json||[], wdPerTurma);
+  renderTurmaFields(Number(p?.turma_count||1), p?.turmas_json||[], wdPerTurma);
   renderWizardStep();
   const msg = document.getElementById('onb-msg');
   if (msg) { msg.className='onb-msg'; msg.textContent=''; }
@@ -609,7 +619,7 @@ function renderWizardStep() {
   document.getElementById('onb-back').style.display = onbStep>1 ? '' : 'none';
   document.getElementById('onb-next').textContent = onbStep===ONB_TOTAL ? 'Salvar' : 'Próximo';
   if (onbStep===3) {
-    const count = Number(getSegVal('onb-turma-count'))||2;
+    const count = Number(getSegVal('onb-turma-count'))||1;
     if (document.querySelectorAll('#onb-turmas .turma-block').length !== count)
       renderTurmaFields(count, [], getPerTurmaWeekdays());
   }
@@ -677,6 +687,34 @@ document.getElementById('onb-back').addEventListener('click', () => { if (onbSte
 document.getElementById('onb-turma-count').addEventListener('click', e => {
   const btn = e.target.closest('.seg-btn');
   if (btn) renderTurmaFields(Number(btn.dataset.val), [], getPerTurmaWeekdays());
+});
+
+// Ciclo legacy → forçar 3 turmas automaticamente; mod12 → liberar escolha
+document.getElementById('onb-cycle').addEventListener('click', e => {
+  const btn = e.target.closest('.seg-btn');
+  if (!btn) return;
+  const isLegacy = btn.dataset.val === 'legacy';
+  // Atualiza visibilidade do btn "3 turmas" e força seleção
+  const turmaBtns = document.querySelectorAll('#onb-turma-count .seg-btn');
+  if (isLegacy) {
+    // Legacy = básico + intermediário + avançado → força 3
+    turmaBtns.forEach(b => b.classList.toggle('sel', b.dataset.val === '3'));
+    renderTurmaFields(3, [], getPerTurmaWeekdays());
+    // Sugere nomes padrão se ainda não foram preenchidos
+    setTimeout(() => {
+      const names = [...document.querySelectorAll('.turma-name')];
+      if (names[0] && !names[0].value) names[0].value = 'Básico';
+      if (names[1] && !names[1].value) names[1].value = 'Intermediário';
+      if (names[2] && !names[2].value) names[2].value = 'Avançado';
+    }, 50);
+  } else {
+    // mod12: garante que a seleção atual está válida (1 ou 2)
+    const curVal = getSegVal('onb-turma-count');
+    if (curVal === '3') {
+      turmaBtns.forEach(b => b.classList.toggle('sel', b.dataset.val === '2'));
+      renderTurmaFields(2, [], getPerTurmaWeekdays());
+    }
+  }
 });
 document.querySelectorAll('.seg-btns').forEach(group => {
   group.addEventListener('click', e => {
