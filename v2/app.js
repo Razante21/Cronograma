@@ -4,7 +4,7 @@ const SUPABASE_URL = window.APP_CONFIG.SUPABASE_URL || '';
 const SUPABASE_ANON_KEY = window.APP_CONFIG.SUPABASE_ANON_KEY || '';
 const MAIN_TEMPLATE_EMAIL = 'pcdsantos007@gmail.com';
 const GEMINI_API_KEY = window.APP_CONFIG.GEMINI_API_KEY || '';
-const GEMINI_MODEL = window.APP_CONFIG.GEMINI_MODEL || 'gemini-2.0-flash-lite';
+const GEMINI_MODEL = window.APP_CONFIG.GEMINI_MODEL || 'gemini-3.1-flash-lite-preview';
 
 let sb = null, currentUser = null, userPreferences = null;
 const userCards = {};
