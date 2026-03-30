@@ -113,6 +113,7 @@ async function applySession(user) {
     await ensurePreferences();
     await loadUserCards();
     await loadAiSuggestions();
+    await loadChatFromDB();
     updateProfileView();
   } catch(e) {
     console.error('applySession:', e);
@@ -944,7 +945,10 @@ async function handleSugg(id, action) {
           updated_at: new Date().toISOString()};
         await upsertCard(row);
         userCards[s.card_id]={title:row.title,description:row.description,activityLink:row.activity_link||'',lessonDate:ex.lessonDate||'',tags:row.tags||''};
-        renderCol(s.card_id[0]);
+        // Extrai o prefixo da coluna (i, a, b, c, d, e) do card_id
+        const colPrefix = s.card_id.match(/^([a-zA-Z]+)/)?.[1]?.[0] || 'i';
+        console.log('[handleSugg] card_id:', s.card_id, '→ renderCol prefix:', colPrefix);
+        renderCol(colPrefix);
       }
     }
     await sb.from('ai_suggestions').update({status:action==='approve'?'approved':'rejected',updated_at:new Date().toISOString()}).eq('id',id).eq('user_id',currentUser.id);
@@ -1088,6 +1092,31 @@ document.getElementById('add-a').addEventListener('click', () => editCard(getNex
 document.getElementById('add-b').addEventListener('click', () => editCard(getNextCardId(currentCycle===2?'e':'b')));
 
 // ── HISTORY ──
+// Carrega histórico no chat-box ao entrar no app
+async function loadChatFromDB() {
+  const log = document.getElementById('chat-log');
+  if (!log || !currentUser || !sb) return;
+  log.innerHTML = '';
+  chatHistory = [];
+  try {
+    const {data, error} = await sb.from('chat_messages')
+      .select('role,content,created_at')
+      .eq('user_id', currentUser.id)
+      .order('created_at', {ascending: true})
+      .limit(100);
+    if (error || !data?.length) return;
+    data.forEach(msg => {
+      const role = msg.role === 'user' ? 'user' : 'ai';
+      const div = document.createElement('div');
+      div.className = 'chat-msg ' + role;
+      div.textContent = msg.content;
+      log.appendChild(div);
+      chatHistory.push({role: msg.role, content: msg.content});
+    });
+    log.scrollTop = log.scrollHeight;
+  } catch(e) { console.warn('loadChatFromDB:', e.message); }
+}
+
 async function loadChatHistory() {
   const log = document.getElementById('history-log');
   if (!currentUser||!sb) { log.innerHTML='<div style="color:var(--text-muted);font-size:13px">Faça login para ver o histórico.</div>'; return; }
