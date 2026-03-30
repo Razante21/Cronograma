@@ -4,7 +4,7 @@ const SUPABASE_URL = window.APP_CONFIG.SUPABASE_URL || '';
 const SUPABASE_ANON_KEY = window.APP_CONFIG.SUPABASE_ANON_KEY || '';
 const MAIN_TEMPLATE_EMAIL = 'pcdsantos007@gmail.com';
 const GEMINI_API_KEY = window.APP_CONFIG.GEMINI_API_KEY || '';
-const GEMINI_MODEL = window.APP_CONFIG.GEMINI_MODEL || 'gemini-3.1-flash-lite-preview';
+const GEMINI_MODEL = window.APP_CONFIG.GEMINI_MODEL || 'gemini-2.0-flash-lite';
 
 let sb = null, currentUser = null, userPreferences = null;
 const userCards = {};
@@ -532,7 +532,7 @@ async function savePreferences(prefs) {
   const { error } = await sb.from('user_preferences').upsert(row, { onConflict:'user_id' });
   if (!error) return null;
   // fallback delete+insert
-  await sb.from('user_preferences').delete().eq('user_id',currentUser.id).catch(()=>{});
+  await sb.from('user_preferences').delete().eq('user_id',currentUser.id).then(()=>{}).catch(()=>{});
   const { error:e2 } = await sb.from('user_preferences').insert(row);
   return e2 ? e2.message : null;
 }
@@ -650,7 +650,7 @@ document.getElementById('onb-next').addEventListener('click', async () => {
   if (displayName) {
     currentUser.user_metadata = currentUser.user_metadata||{};
     currentUser.user_metadata.display_name = displayName;
-    sb.auth.updateUser({data:{display_name:displayName}}).catch(()=>{});
+    sb.auth.updateUser({data:{display_name:displayName}}).then(()=>{}).catch(()=>{});
   }
   const err = await savePreferences({
     turmaCount, cycleType:getSegVal('onb-cycle'), moduleCount:Number(getSegVal('onb-mods')),
@@ -1031,7 +1031,7 @@ Mensagem: ${msg}`;
 
     if (data.suggestions?.length) {
       if (sb && currentUser) {
-        sb.from('ai_suggestions').insert(data.suggestions.map(s=>({user_id:currentUser.id,card_id:s.card_id,field:s.field,current_value:null,suggested_value:s.suggested_value,reason:s.reason||null,status:'pending'}))).catch(()=>{});
+        sb.from('ai_suggestions').insert(data.suggestions.map(s=>({user_id:currentUser.id,card_id:s.card_id,field:s.field,current_value:null,suggested_value:s.suggested_value,reason:s.reason||null,status:'pending'}))).then(()=>{}).catch(()=>{});
       }
       if (userPreferences?.allow_ai_edits) {
         await Promise.all(data.suggestions.map(async s => {
