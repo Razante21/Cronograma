@@ -280,7 +280,7 @@ function renderCol(col) {
 function buildCard(id, col, card, dateStr, dt) {
   const lc = document.createElement('div');
   const isEnc = id === 'enc';
-  const isDone = dt && dt < new Date();
+  const isDone = card.done || (dt && dt < new Date());
   lc.className = `lc${isDone?' done':''}${isEnc?' enc-card':''}`;
   lc.dataset.id = id;
 
@@ -366,6 +366,18 @@ function openDetail(id, col) {
   document.getElementById('detail-modal').dataset.col = col;
   document.getElementById('detail-edit').style.display = '';
   document.getElementById('detail-edit').onclick = () => { closeAllModals(); editCard(id); };
+  // Botão "Concluída / Desfazer"
+  const doneBtn = document.getElementById('detail-done');
+  const card = userCards[id];
+  const isDoneNow = card?.done || false;
+  doneBtn.style.display = '';
+  doneBtn.textContent = isDoneNow ? '↩ Desfazer conclusão' : '✓ Marcar como concluída';
+  doneBtn.className = isDoneNow ? 'btn btn-ghost' : 'btn btn-done';
+  doneBtn.onclick = () => toggleDone(id);
+  // Botão "Excluir"
+  const delBtn = document.getElementById('detail-delete');
+  delBtn.style.display = '';
+  delBtn.onclick = () => deleteCard(id);
   openModal('detail-modal');
 }
 window.openDetail = openDetail;
@@ -474,7 +486,7 @@ async function loadUserCards() {
   if (!currentUser || !sb) return;
   const { data, error } = await sb
     .from('user_card_content')
-    .select('card_id,title,description,activity_link,lesson_date,tags')
+    .select('card_id,title,description,activity_link,lesson_date,tags,done')
     .eq('user_id', currentUser.id);
 
   if (error) {
@@ -490,7 +502,8 @@ async function loadUserCards() {
       description: r.description,
       activityLink: r.activity_link||'',
       lessonDate: r.lesson_date||'',
-      tags: r.tags||''
+      tags: r.tags||'',
+      done: r.done||false
     };
   });
 
@@ -946,6 +959,44 @@ async function openPublicSchedule(userId) {
   }
 }
 
+// ── TOGGLE DONE ──
+async function toggleDone(id) {
+  if (!currentUser || !sb) return;
+  const card = userCards[id];
+  if (!card) return;
+  const newDone = !card.done;
+  try {
+    const row = {
+      user_id: currentUser.id, card_id: id,
+      title: card.title||id, description: card.description||'',
+      activity_link: card.activityLink||null, lesson_date: card.lessonDate||null,
+      tags: card.tags||null, done: newDone, updated_at: new Date().toISOString()
+    };
+    await upsertCard(row);
+    userCards[id].done = newDone;
+    closeAllModals();
+    renderSchedule();
+    showToast(newDone ? '✓ Aula marcada como concluída' : 'Conclusão desfeita', newDone ? 'ok' : '');
+  } catch(e) { showToast('Erro: '+e.message, 'err'); }
+}
+
+// ── DELETE CARD ──
+async function deleteCard(id) {
+  if (!currentUser || !sb) return;
+  const card = userCards[id];
+  if (!card) return;
+  if (!confirm(`Excluir a aula "${card.title}"? Esta ação não pode ser desfeita.`)) return;
+  try {
+    const { error } = await sb.from('user_card_content')
+      .delete().eq('user_id', currentUser.id).eq('card_id', id);
+    if (error) throw new Error(error.message);
+    delete userCards[id];
+    closeAllModals();
+    renderSchedule();
+    showToast('Aula excluída', '');
+  } catch(e) { showToast('Erro: '+e.message, 'err'); }
+}
+
 // Modal de detalhe do card público (somente leitura)
 function openPubCardDetail(card, dateStr) {
   // Reusa o detail-modal existente mas sem botão editar
@@ -972,8 +1023,10 @@ function openPubCardDetail(card, dateStr) {
   }
   body.className = 'modal-body';
   body.innerHTML = h;
-  // Esconde botão editar no modal público
+  // Esconde botões de ação no modal público
   document.getElementById('detail-edit').style.display = 'none';
+  document.getElementById('detail-done').style.display = 'none';
+  document.getElementById('detail-delete').style.display = 'none';
   document.getElementById('detail-modal').dataset.col = '';
   openModal('detail-modal');
 }
@@ -1035,9 +1088,8 @@ async function handleSugg(id, action) {
         await upsertCard(row);
         userCards[s.card_id]={title:row.title,description:row.description,activityLink:row.activity_link||'',lessonDate:ex.lessonDate||'',tags:row.tags||''};
         // Extrai o prefixo da coluna (i, a, b, c, d, e) do card_id
-        const colPrefix = s.card_id.match(/^([a-zA-Z]+)/)?.[1]?.[0] || 'i';
-        console.log('[handleSugg] card_id:', s.card_id, '→ renderCol prefix:', colPrefix);
-        renderCol(colPrefix);
+        console.log('[handleSugg] aprovado card_id:', s.card_id, 'field:', s.field, 'valor:', s.suggested_value);
+        renderSchedule(); // re-renderiza tudo para garantir que o card aparece
       }
     }
     await sb.from('ai_suggestions').update({status:action==='approve'?'approved':'rejected',updated_at:new Date().toISOString()}).eq('id',id).eq('user_id',currentUser.id);
@@ -1096,18 +1148,43 @@ async function sendChat() {
   addTypingIndicator();
   document.getElementById('chat-send').disabled = true;
   try {
-    const cardContext = Object.entries(userCards).slice(0,15).map(([id,c])=>(`Card ${id}: "${c.title}" — ${c.description}`)).join('\n') || 'Nenhum card ainda.';
+    // Monta contexto dos cards existentes
+    const cardContext = Object.entries(userCards).slice(0,20)
+      .map(([id,c])=>(`${id}: "${c.title}" — ${c.description||'sem descrição'}`)).join('\n') || 'Nenhum card criado ainda.';
+
+    // Monta lista de IDs válidos no cronograma para a IA não inventar
+    const turmas = userPreferences?.turmas_json || [];
+    const turmaCount = userPreferences?.turma_count || 1;
+    const prefixes = ['i','a','b','c','d','e'].slice(0, turmaCount);
+    const validIds = [];
+    prefixes.forEach(p => { for(let n=1;n<=20;n++) validIds.push(`${p}${n}`); });
+    validIds.push('enc');
+    const validIdsStr = validIds.slice(0, turmaCount*20+1).join(', ');
+
+    // Nomes das turmas para a IA saber qual prefixo pertence a qual turma
+    const turmaMap = prefixes.map((p,i) => `${p}1..${p}20 = ${turmas[i]||'Turma '+(i+1)}`).join(' | ');
+
     const historyText = chatHistory.slice(-6).map(m=>`${m.role==='user'?'Usuário':'Assistente'}: ${m.content}`).join('\n');
     const prompt = `Você é um assistente de cronograma de aulas do FIEC.
-Cards atuais do cronograma:
+
+IDs VÁLIDOS (use APENAS estes): ${validIdsStr}
+Mapeamento de turmas: ${turmaMap}
+
+Cards já criados:
 ${cardContext}
 
 Histórico recente:
 ${historyText}
 
-Responda SOMENTE em JSON válido sem markdown:
-{"answer":"resposta em português amigável","suggestions":[{"card_id":"id do card","field":"title|description|activity_link|tags","suggested_value":"valor","reason":"motivo"}]}
-Se não houver sugestões, retorne suggestions como [].
+REGRAS OBRIGATÓRIAS:
+- Responda SOMENTE em JSON válido, sem markdown, sem texto fora do JSON
+- card_id DEVE ser um dos IDs válidos listados acima — NUNCA invente IDs
+- field deve ser exatamente: title, description, activity_link ou tags
+- Se o usuário pedir para mudar o nome/título de uma aula específica (ex: "i3"), use esse card_id exato
+- Se o card ainda não existe, use o próximo ID disponível da turma correta
+
+Formato de resposta:
+{"answer":"resposta em português amigável","suggestions":[{"card_id":"id exato da lista válida","field":"title","suggested_value":"novo valor","reason":"motivo breve"}]}
 
 Mensagem: ${msg}`;
 
@@ -1123,10 +1200,9 @@ Mensagem: ${msg}`;
     }
 
     if (data.suggestions?.length) {
-      if (sb && currentUser) {
-        sb.from('ai_suggestions').insert(data.suggestions.map(s=>({user_id:currentUser.id,card_id:s.card_id,field:s.field,current_value:null,suggested_value:s.suggested_value,reason:s.reason||null,status:'pending'}))).then(()=>{}).catch(()=>{});
-      }
+      console.log('[IA] sugestões recebidas:', JSON.stringify(data.suggestions));
       if (userPreferences?.allow_ai_edits) {
+        // Modo auto: aplica direto
         await Promise.all(data.suggestions.map(async s => {
           try {
             const ex = userCards[s.card_id]||{};
@@ -1137,12 +1213,46 @@ Mensagem: ${msg}`;
               tags:s.field==='tags'?s.suggested_value:(ex.tags||null),updated_at:new Date().toISOString()};
             await upsertCard(row);
             userCards[s.card_id]={title:row.title,description:row.description,activityLink:row.activity_link||'',lessonDate:ex.lessonDate||'',tags:row.tags||''};
-          } catch {}
+            console.log('[IA auto] card salvo:', s.card_id, '→', row.title);
+          } catch(e) { console.error('[IA auto] erro ao salvar', s.card_id, e.message); }
         }));
         renderSchedule();
         showToast(`✓ IA aplicou ${data.suggestions.length} sugestão(ões)`,'ok');
+        // Salva no banco de sugestões como aprovadas (histórico)
+        if (sb && currentUser) {
+          sb.from('ai_suggestions').insert(data.suggestions.map(s=>({
+            user_id:currentUser.id,card_id:s.card_id,field:s.field,
+            current_value:null,suggested_value:s.suggested_value,
+            reason:s.reason||null,status:'approved'
+          }))).then(()=>{}).catch(()=>{});
+        }
       } else {
-        suggestionsPending = [...data.suggestions.map(s=>({...s,id:crypto.randomUUID()})),...suggestionsPending];
+        // Modo sugestão: salva no banco com await para pegar IDs reais
+        let insertedIds = [];
+        if (sb && currentUser) {
+          try {
+            const { data: inserted } = await sb.from('ai_suggestions')
+              .insert(data.suggestions.map(s=>({
+                user_id:currentUser.id,card_id:s.card_id,field:s.field,
+                current_value:null,suggested_value:s.suggested_value,
+                reason:s.reason||null,status:'pending'
+              })))
+              .select('id,card_id,field,suggested_value,reason,status');
+            if (inserted?.length) {
+              // Usa os registros reais do banco (com IDs reais)
+              suggestionsPending = [...inserted, ...suggestionsPending];
+              console.log('[IA sugestões] inseridas no banco:', inserted.map(x=>x.id));
+            } else {
+              // Fallback: UUID local se insert não retornou dados
+              suggestionsPending = [...data.suggestions.map(s=>({...s,id:crypto.randomUUID()})),...suggestionsPending];
+            }
+          } catch(e) {
+            console.error('[IA sugestões] erro ao inserir:', e.message);
+            suggestionsPending = [...data.suggestions.map(s=>({...s,id:crypto.randomUUID()})),...suggestionsPending];
+          }
+        } else {
+          suggestionsPending = [...data.suggestions.map(s=>({...s,id:crypto.randomUUID()})),...suggestionsPending];
+        }
         updateSuggBadge();
         showToast(`💡 ${data.suggestions.length} sugestão(ões) no painel`,'');
       }
