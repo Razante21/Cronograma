@@ -1,0 +1,5 @@
+{
+  "buildCommand": "node build.js",
+  "outputDirectory": "v2",
+  "installCommand": "echo 'sem dependencias'"
+}
