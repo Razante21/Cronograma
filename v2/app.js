@@ -200,8 +200,9 @@ function renderSchedule() {
   const prefix3 = currentCycle===2 ? 'e' : 'b';
   const turmaCount = prefs?.turma_count || turmas.length || 1;
 
-  document.getElementById('col-i-name').textContent = turmas[0] || 'Turma 1';
-  document.getElementById('col-a-name').textContent = turmas[1] || 'Turma 2';
+  const startLabel = prefs?.start_date ? ` · ${formatDateBR(prefs.start_date).day}/${formatDateBR(prefs.start_date).mo}` : '';
+  document.getElementById('col-i-name').textContent = (turmas[0] || 'Turma 1') + startLabel;
+  document.getElementById('col-a-name').textContent = (turmas[1] || 'Turma 2') + startLabel;
   document.getElementById('col-b-name').textContent = turmas[2] || 'Turma 3';
   document.getElementById('col-a').style.display = turmaCount>=2 ? '' : 'none';
   document.getElementById('col-b').style.display = turmaCount>=3 ? '' : 'none';
@@ -363,6 +364,7 @@ function openDetail(id, col) {
   body.className = `modal-body ${uiCol}`;
   body.innerHTML = h;
   document.getElementById('detail-modal').dataset.col = col;
+  document.getElementById('detail-edit').style.display = '';
   document.getElementById('detail-edit').onclick = () => { closeAllModals(); editCard(id); };
   openModal('detail-modal');
 }
@@ -884,20 +886,35 @@ async function openPublicSchedule(userId) {
   document.getElementById('pub-cards-a').innerHTML = '';
   try {
     const [{data:prefs},{data:cards,error}] = await Promise.all([
-      sb.from('user_preferences').select('turmas_json,display_name,calendar_json').eq('user_id',userId).maybeSingle(),
-      sb.rpc('get_public_cards',{p_user_id:userId})
+      sb.from('user_preferences').select('turmas_json,display_name,calendar_json,start_date,turma_count,weekdays_json').eq('user_id',userId).maybeSingle(),
+      sb.from('user_card_content').select('card_id,title,description,activity_link,lesson_date,tags').eq('user_id',userId).order('lesson_date',{ascending:true,nullsFirst:false})
     ]);
     if (error) throw new Error(error.message);
-    const turmas = prefs?.turmas_json||['Turma 1','Turma 2'];
+    const turmas = prefs?.turmas_json||['Turma 1'];
+    const pubTurmaCount = prefs?.turma_count || turmas.length || 1;
+    const pubStartDate = prefs?.start_date || '';
+    const pubStartLabel = pubStartDate ? ` · ${formatDateBR(pubStartDate).day}/${formatDateBR(pubStartDate).mo}` : '';
     document.getElementById('pub-sched-title').textContent = `${prefs?.display_name||'Professor(a)'} — Cronograma`;
-    document.getElementById('pub-col-i-name').textContent = turmas[0]||'Turma 1';
-    document.getElementById('pub-col-a-name').textContent = turmas[1]||'Turma 2';
-    document.getElementById('pub-col-b-name').textContent = turmas[2]||'Turma 3';
-    document.getElementById('pub-col-b').style.display = turmas.length>=3?'':'none';
-    document.getElementById('pub-sched-grid').classList.toggle('cols-3',turmas.length>=3);
-    const calJson = prefs?.calendar_json||{};
+    document.getElementById('pub-col-i-name').textContent = (turmas[0]||'Turma 1') + pubStartLabel;
+    document.getElementById('pub-col-a-name').textContent = (turmas[1]||'Turma 2') + pubStartLabel;
+    document.getElementById('pub-col-b-name').textContent = (turmas[2]||'Turma 3') + pubStartLabel;
+    document.getElementById('pub-col-a').style.display = pubTurmaCount>=2 ? '' : 'none';
+    document.getElementById('pub-col-b').style.display = pubTurmaCount>=3 ? '' : 'none';
+    document.getElementById('pub-sched-grid').classList.toggle('cols-3', pubTurmaCount>=3);
+    document.getElementById('pub-sched-grid').style.gridTemplateColumns = pubTurmaCount===1 ? '1fr' : pubTurmaCount>=3 ? '' : '1fr 1fr';
+    // Se calendar_json vier vazio mas tiver start_date + weekdays_json, recalcula
+    let calJson = prefs?.calendar_json||{};
+    if (!Object.keys(calJson).length && prefs?.start_date && prefs?.weekdays_json) {
+      let wdList = prefs.weekdays_json;
+      if (!Array.isArray(wdList[0])) wdList = [wdList, wdList];
+      wdList.forEach((wd,idx) => {
+        if (!wd?.length) return;
+        const dates = calcLessonDates(prefs.start_date, wd, 33);
+        Object.entries(dates).forEach(([k,v]) => { calJson[`t${idx}_${k}`] = v; });
+      });
+    }
     const cardMap = {};
-    (cards||[]).forEach(r => { cardMap[r.card_id]={title:r.title,description:r.description,lessonDate:r.lesson_date||'',tags:r.tags||''}; });
+    (cards||[]).forEach(r => { cardMap[r.card_id]={title:r.title,description:r.description,lessonDate:r.lesson_date||'',tags:r.tags||'',activityLink:r.activity_link||''}; });
     const pubPrefixes = turmas.length>=3?['i','a','b']:['i','a'];
     pubPrefixes.forEach((prefix,colIdx) => {
       const container = document.getElementById(`pub-cards-${prefix}`);
@@ -916,6 +933,8 @@ async function openPublicSchedule(userId) {
         if (dateStr) { const {day,mo,wd}=formatDateBR(dateStr); dateHtml=`<div class="lc-day">${day}</div><div class="lc-month">${mo}</div><div class="lc-wd">${wd}</div>`; }
         else { dateHtml=`<div class="lc-no-date">#${n}</div>`; }
         lc.innerHTML=`<div class="lc-date">${dateHtml}</div><div class="lc-body"><div class="lc-title">${escHtml(card.title)}</div>${card.description?`<div class="lc-desc">${escHtml(card.description.split('\n')[0])}</div>`:''}</div><div class="lc-right"><span class="lc-num">#${n}</span>${card.tags?`<div class="tag-dot ${card.tags}"></div>`:''}</div>`;
+        lc.style.cursor = 'pointer';
+        lc.addEventListener('click', () => openPubCardDetail(card, dateStr));
         container.appendChild(lc); shown++;
       });
       document.getElementById(`pub-col-${prefix}-count`).textContent=`${shown} aula${shown!==1?'s':''}`;
@@ -925,6 +944,38 @@ async function openPublicSchedule(userId) {
     document.getElementById('pub-sched-title').textContent='Erro ao carregar';
     document.getElementById('pub-cards-i').innerHTML=`<div style="padding:20px;color:var(--red);font-size:13px">${escHtml(e.message)}</div>`;
   }
+}
+
+// Modal de detalhe do card público (somente leitura)
+function openPubCardDetail(card, dateStr) {
+  // Reusa o detail-modal existente mas sem botão editar
+  const body = document.getElementById('detail-body');
+  const title = card.title || '';
+  const desc = card.description || '';
+  const tag = card.tags || '';
+  const link = card.activityLink || '';
+  const topics = desc ? desc.split('\n').filter(Boolean) : [];
+  let h = '';
+  if (dateStr) h += `<div class="detail-date">${dateStr}</div>`;
+  h += `<div class="detail-title">${escHtml(title)}</div>`;
+  if (tag) h += `<div class="detail-tag ${tag}">${tag.charAt(0).toUpperCase()+tag.slice(1)}</div>`;
+  if (topics.length) {
+    h += `<div class="detail-section"><div class="detail-section-label">Conteúdo</div>`;
+    topics.forEach(t => h += `<div class="detail-topic"><div class="detail-bullet"></div><span>${escHtml(t)}</span></div>`);
+    h += `</div>`;
+  }
+  if (link) {
+    h += `<div class="detail-section"><div class="detail-section-label">Atividade</div>`;
+    h += `<a class="detail-link" href="${escHtml(link)}" target="_blank" rel="noopener">🔗 Abrir atividade</a>`;
+    h += `<iframe src="${toGoogleEmbedUrl(link)}" class="detail-iframe" allow="autoplay"></iframe>`;
+    h += `</div>`;
+  }
+  body.className = 'modal-body';
+  body.innerHTML = h;
+  // Esconde botão editar no modal público
+  document.getElementById('detail-edit').style.display = 'none';
+  document.getElementById('detail-modal').dataset.col = '';
+  openModal('detail-modal');
 }
 
 document.getElementById('gallery-refresh').addEventListener('click', loadPublicSchedules);
