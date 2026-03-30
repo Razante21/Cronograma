@@ -1026,7 +1026,7 @@ Mensagem: ${msg}`;
 
     // Persiste no banco (fire-and-forget)
     if (sb && currentUser) {
-      sb.from('chat_messages').insert([{user_id:currentUser.id,role:'user',content:msg},{user_id:currentUser.id,role:'assistant',content:answer}]).catch(()=>{});
+      sb.from('chat_messages').insert([{user_id:currentUser.id,role:'user',content:msg},{user_id:currentUser.id,role:'assistant',content:answer}]).then(()=>{}).catch(()=>{});
     }
 
     if (data.suggestions?.length) {
