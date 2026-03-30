@@ -54,6 +54,8 @@ body:not(.logged-in) .main{margin-left:0}
 .btn-ghost:hover{color:var(--text);border-color:var(--text-muted)}
 .btn-danger{background:rgba(240,82,82,.15);color:var(--red);border:1px solid rgba(240,82,82,.3)}
 .btn-danger:hover{background:rgba(240,82,82,.25)}
+.btn-done{background:rgba(61,214,140,.15);color:var(--green);border:1px solid rgba(61,214,140,.3)}
+.btn-done:hover{background:rgba(61,214,140,.25)}
 .btn-google{background:#fff;color:#3c4043;border:1px solid #dadce0;font-weight:500}
 .btn-google:hover{background:#f8f9fa}
 .auth-divider{display:flex;align-items:center;gap:12px;margin:12px 0;color:var(--text-muted);font-size:12px}
