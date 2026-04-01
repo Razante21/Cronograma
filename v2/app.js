@@ -368,7 +368,6 @@ function openDetail(id, col) {
   document.getElementById('detail-edit').onclick = () => { closeAllModals(); editCard(id); };
   // Botão "Concluída / Desfazer"
   const doneBtn = document.getElementById('detail-done');
-  const card = userCards[id];
   const isDoneNow = card?.done || false;
   doneBtn.style.display = '';
   doneBtn.textContent = isDoneNow ? '↩ Desfazer conclusão' : '✓ Marcar como concluída';
