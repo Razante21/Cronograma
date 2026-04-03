@@ -1,5 +1,7 @@
 window.APP_CONFIG = {
-  SUPABASE_URL: 'https://YOUR_PROJECT_REF.supabase.co',
-  SUPABASE_ANON_KEY: 'YOUR_SUPABASE_ANON_KEY',
-  API_BASE: 'http://localhost:8787'
+  SUPABASE_URL: 'https://SEU_PROJETO.supabase.co',
+  SUPABASE_ANON_KEY: 'sua_anon_key',
+  GEMINI_API_KEY: 'sua_gemini_key',
+  GEMINI_MODEL: 'gemini-3.1-flash-lite-preview',
+  ANTHROPIC_API_KEY: 'sua_anthropic_key',
 };
