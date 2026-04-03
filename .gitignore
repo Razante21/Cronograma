@@ -2,6 +2,10 @@ backend/node_modules/
 .env
 app_config.js
 v2/app_config.js
+<<<<<<< HEAD
 .claude/
 .vite/
 node_modules
+=======
+context.md
+>>>>>>> e92589f8dd4c639952bcf0b9ddcd7283769e429a
