@@ -275,14 +275,16 @@ function formatDateBR(iso) {
 async function initSupabase() {
   if (!SUPABASE_URL || !SUPABASE_ANON_KEY) { console.warn('APP_CONFIG missing'); return; }
   sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-  const { data: { session } } = await sb.auth.getSession();
-  if (session?.user) await applySession(session.user);
-  else showLanding();
-  sb.auth.onAuthStateChange(async (_, session) => {
+  // Register listener BEFORE getSession so OAuth redirect events are never missed
+  sb.auth.onAuthStateChange(async (event, session) => {
+    if (event === 'INITIAL_SESSION') return; // handled by getSession() below
     if (_sessionApplying) return;
     if (session?.user) await applySession(session.user);
     else showLanding();
   });
+  const { data: { session } } = await sb.auth.getSession();
+  if (session?.user) await applySession(session.user);
+  else showLanding();
 }
 
 async function applySession(user) {
@@ -558,9 +560,32 @@ function openDetail(id, col) {
   body.innerHTML = h;
   document.getElementById('detail-modal').dataset.col = col;
   document.getElementById('detail-edit').onclick = () => { closeAllModals(); editCard(id); };
+  const delBtn = document.getElementById('detail-delete');
+  if (userCards[id]) {
+    delBtn.style.display = '';
+    delBtn.onclick = () => deleteCard(id);
+  } else {
+    delBtn.style.display = 'none';
+  }
   openModal('detail-modal');
 }
 window.openDetail = openDetail;
+
+async function deleteCard(id) {
+  if (!currentUser || !confirm('Remover o conteúdo desta aula?')) return;
+  try {
+    await sb.from('user_card_content').delete()
+      .eq('user_id', currentUser.id)
+      .eq('card_id', id);
+    delete userCards[id];
+    const isOwner = currentUser.email === MAIN_TEMPLATE_EMAIL;
+    renderSchedule(isOwner);
+    closeAllModals();
+    showToast('✓ Aula removida', 'ok');
+  } catch (e) {
+    showToast(e.message, 'err');
+  }
+}
 
 function toGoogleEmbedUrl(url) {
   if (!url) return '';
